@@ -6,13 +6,12 @@
     <title>TERMİNAL | ADMİN PANELİ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Outfit:wght@500;800;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f9f9fb; color: #2d3338; }
         .font-headline { font-family: 'Outfit', sans-serif; }
         .section-card { background: #ffffff; border-radius: 1.5rem; padding: 2rem; border: 1px solid #e2e8f0; margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .label-text { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #718096; margin-bottom: 0.6rem; display: block; }
-        input, select { background: #ffffff; border: 1px solid #cbd5e0; border-radius: 0.75rem; padding: 1rem; width: 100%; font-weight: 700; transition: all 0.2s; }
+        input, select { background: #ffffff; border: 1px solid #cbd5e0; border-radius: 0.75rem; padding: 0.75rem; width: 100%; font-weight: 700; transition: all 0.2s; }
         input:focus, select:focus { border-color: #ba1e1e; outline: none; box-shadow: 0 0 0 3px rgba(186,30,30,0.1); }
         .btn-sync { background: #3b82f6; color: white; border-radius: 0.75rem; }
         .btn-save { background: #ba1e1e; color: white; border-radius: 0.75rem; }
@@ -39,64 +38,91 @@
             </div>
 
             <div class="section-card">
-                <label class="label-text">MANUEL FİNANSAL GİRDİLER</label>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label class="text-xs font-bold text-gray-500">Polyester ($/Ton)</label><input type="number" id="polyester"></div>
-                    <div><label class="text-xs font-bold text-gray-500">Gübre ($/Ton)</label><input type="number" id="gubre"></div>
-                    <div><label class="text-xs font-bold text-gray-500">Jet Yakıtı ($/Bbl)</label><input type="number" step="0.01" id="jetFuel"></div>
-                    <div><label class="text-xs font-bold text-gray-500">Türkiye 5Y CDS</label><input type="number" id="cds"></div>
+                <div class="flex justify-between items-center mb-4">
+                    <label class="label-text mb-0">MANUEL FİNANSAL GİRDİLER</label>
+                    <button type="button" id="addMetricBtn" class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-lg text-xs font-black transition">+ YENİ EKLE</button>
                 </div>
+                <div id="dynamic-metrics" class="space-y-3">
+                    </div>
             </div>
 
             <div class="sticky bottom-6 bg-white/90 backdrop-blur-md p-6 rounded-2xl border border-gray-200 shadow-xl flex gap-4">
                 <input type="password" id="pin" placeholder="PIN KODU" class="w-1/3 text-center tracking-widest" required>
-                <button type="button" id="btnSync" class="btn-sync flex-1 font-black uppercase tracking-wider shadow-lg hover:bg-blue-700 transition">BOTU ÇALIŞTIR (HABER & PİYASA)</button>
+                <button type="button" id="btnSync" class="btn-sync flex-1 font-black uppercase tracking-wider shadow-lg hover:bg-blue-700 transition">BOTU ÇALIŞTIR</button>
                 <button type="submit" class="btn-save flex-1 font-black uppercase tracking-wider shadow-lg hover:bg-red-800 transition">MANUEL VERİLERİ KAYDET</button>
             </div>
         </form>
     </div>
 
     <script>
-        // Sayfa yüklendiğinde mevcut verileri getir
+        const metricsContainer = document.getElementById('dynamic-metrics');
+
+        // Satır Ekleme Fonksiyonu
+        function createMetricRow(name = "", unit = "", value = 0) {
+            const row = document.createElement('div');
+            row.className = "flex gap-2 items-center metric-row bg-gray-50 p-2 rounded-xl border border-gray-100";
+            row.innerHTML = `
+                <input type="text" placeholder="İsim (Örn: Çelik)" class="metric-name flex-[2] text-sm" value="${name}" required>
+                <input type="text" placeholder="Birim (Örn: $/Ton)" class="metric-unit flex-1 text-sm" value="${unit}">
+                <input type="number" step="any" placeholder="Değer" class="metric-value flex-1 text-sm text-blue-700 font-black" value="${value}" required>
+                <button type="button" class="bg-red-100 hover:bg-red-200 text-red-600 px-4 py-3 rounded-lg font-black transition" onclick="this.parentElement.remove()">X</button>
+            `;
+            metricsContainer.appendChild(row);
+        }
+
+        // Yeni Ekle Butonu
+        document.getElementById('addMetricBtn').onclick = () => createMetricRow();
+
+        // Verileri Yükle
         fetch('/api/state').then(res => res.json()).then(data => {
             document.getElementById('hurmuzStatus').value = data.hurmuzStatus || "AÇIK / GÜVENLİ";
-            document.getElementById('polyester').value = data.manual?.polyester || 0;
-            document.getElementById('gubre').value = data.manual?.gubre || 0;
-            document.getElementById('jetFuel').value = data.manual?.jetFuel || 0;
-            document.getElementById('cds').value = data.manual?.cds || 0;
+            
+            const metrics = data.manualMetrics || [];
+            if(metrics.length === 0) {
+                createMetricRow("Polyester", "$/Ton", 1250); // Boşsa 1 tane varsayılan aç
+            } else {
+                metrics.forEach(m => createMetricRow(m.name, m.unit, m.value));
+            }
         });
 
         // Verileri Kaydet
         document.getElementById('adminForm').onsubmit = async (e) => {
             e.preventDefault();
+            
+            // Satırları toparla
+            const finalMetrics = [];
+            document.querySelectorAll('.metric-row').forEach(row => {
+                finalMetrics.push({
+                    name: row.querySelector('.metric-name').value,
+                    unit: row.querySelector('.metric-unit').value,
+                    value: parseFloat(row.querySelector('.metric-value').value) || 0
+                });
+            });
+
             const payload = {
-                pin: document.getElementById('pin').value,
-                action: "update_manual",
+                pin: document.getElementById('pin').value.trim(),
                 data: {
                     hurmuzStatus: document.getElementById('hurmuzStatus').value,
-                    manual: {
-                        polyester: parseFloat(document.getElementById('polyester').value),
-                        gubre: parseFloat(document.getElementById('gubre').value),
-                        jetFuel: parseFloat(document.getElementById('jetFuel').value),
-                        cds: parseFloat(document.getElementById('cds').value)
-                    }
+                    manualMetrics: finalMetrics
                 }
             };
             
-            const res = await fetch('/api/state', { method: 'POST', body: JSON.stringify(payload) });
-            if(res.ok) alert("✅ Kaydedildi!"); else alert("❌ Hata veya Yanlış PIN");
+            try {
+                const res = await fetch('/api/state', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+                if(res.ok) alert("✅ Modüler Veriler Kaydedildi!"); else alert("❌ Hata veya Yanlış PIN");
+            } catch(err) { alert("Bağlantı hatası"); }
         };
 
-        // Haber & Piyasa Botunu Tetikle
+        // Botu Tetikle
         document.getElementById('btnSync').onclick = async () => {
-            const pin = document.getElementById('pin').value;
+            const pin = document.getElementById('pin').value.trim();
             if(!pin) return alert("Önce PIN girin!");
-            
             document.getElementById('btnSync').innerText = "TARANIYOR...";
-            const res = await fetch('/api/sync-bot', { method: 'POST', body: JSON.stringify({pin}) });
-            if(res.ok) alert("🤖 Haberler ve Piyasalar Güncellendi!"); 
-            else alert("❌ Hata!");
-            document.getElementById('btnSync').innerText = "BOTU ÇALIŞTIR (HABER & PİYASA)";
+            try {
+                const res = await fetch('/api/sync-bot', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pin}) });
+                if(res.ok) alert("🤖 Haberler ve Piyasalar Güncellendi!"); else alert("❌ Hata veya Yanlış PIN!");
+            } catch(e) { alert("Bağlantı hatası!"); }
+            document.getElementById('btnSync').innerText = "BOTU ÇALIŞTIR";
         };
     </script>
 </body>
