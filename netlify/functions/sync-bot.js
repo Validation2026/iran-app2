@@ -21,9 +21,25 @@ const tickers = {
 
 exports.handler = async function(event) {
     connectLambda(event);
-    if (event.body) {
-        const body = JSON.parse(event.body);
-        if (body.pin !== "isedes") return { statusCode: 403, body: JSON.stringify({ error: "Unauthorized" }) };
+    
+    // NETLIFY BASE64 DEKODER VE PIN KONTROLÜ
+    if (event.httpMethod === "POST" && event.body) {
+        try {
+            // Netlify veriyi şifrelediyse önce onu çöz
+            let payload = event.body;
+            if (event.isBase64Encoded) {
+                payload = Buffer.from(event.body, 'base64').toString('utf-8');
+            }
+            
+            const body = JSON.parse(payload);
+            
+            // Eğer girilen PIN 'isedes' değilse reddet
+            if (body.pin !== "isedes") {
+                return { statusCode: 403, body: JSON.stringify({ error: "Yanlış PIN girdiniz!" }) };
+            }
+        } catch (e) {
+            return { statusCode: 400, body: JSON.stringify({ error: "Geçersiz istek formatı!" }) };
+        }
     }
 
     try {
