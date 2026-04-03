@@ -70,9 +70,22 @@ exports.handler = async function(event) {
         if (!currentData) currentData = defaultData;
 
         // 1. HABER TARAMASI
-        const queries = ["İran+saldırı", "İsrail+füze", "Lübnan+vuruldu"];
+        // 1. HABER TARAMASI VE AKILLI LOKASYON BULUCU
+        const queries = ["İran+saldırı", "İsrail+füze", "Lübnan+vuruldu", "Husiler+saldırdı", "Suriye+hava+harekatı"];
         let allNews = [];
         let strikes = [];
+
+        // Botun haber başlıklarında arayacağı kelimeler (Genişletilmiş)
+        const news_keywords = {
+            "tahran": [35.68, 51.38, "il"], "isfahan": [32.65, 51.66, "il"], "iran": [35.68, 51.38, "il"],
+            "tel aviv": [32.08, 34.78, "ir"], "kudüs": [31.76, 35.21, "ir"], "israil": [31.76, 35.21, "ir"],
+            "beyrut": [33.89, 35.50, "il"], "lübnan": [33.89, 35.50, "il"], "hizbullah": [33.89, 35.50, "il"],
+            "şam": [33.51, 36.29, "il"], "suriye": [33.51, 36.29, "il"], "halep": [36.20, 37.13, "il"],
+            "sanaa": [15.36, 44.19, "us"], "yemen": [15.36, 44.19, "us"], "husi": [14.79, 42.95, "il"],
+            "kızıldeniz": [15.00, 41.50, "ir"], "erbil": [36.19, 44.00, "ir"], "irak": [33.31, 44.36, "us"]
+        };
+
+        const jitter = (val) => val + (Math.random() * 0.2 - 0.1); // Haritada üst üste binmesin diye hafif kaydırma
 
         for (const q of queries) {
             try {
@@ -81,14 +94,20 @@ exports.handler = async function(event) {
                     if (!allNews.find(n => n.title === item.title)) {
                         allNews.push({ title: item.title, link: item.link, date: item.isoDate });
                     }
-                    for (const [city, data] of Object.entries(geo_db)) {
-                        if (item.title.toLowerCase().includes(city.toLowerCase())) {
+                    
+                    // Haberin başlığını küçük harfe çevirip kelime arıyoruz
+                    const titleLower = item.title.toLowerCase();
+                    for (const [keyword, data] of Object.entries(news_keywords)) {
+                        if (titleLower.includes(keyword)) {
                             strikes.push({
-                                city: `🔴 SON DAKİKA: ${city}`, 
-                                lat: jitter(data[0]), lon: jitter(data[1]),
-                                actor: data[2], title: item.title, link: item.link
+                                city: `🔴 CANLI HABER: ${keyword.toUpperCase()}`, 
+                                lat: jitter(data[0]), 
+                                lon: jitter(data[1]),
+                                actor: data[2], 
+                                title: item.title, 
+                                link: item.link
                             });
-                            break;
+                            break; // Bir haber için bir nokta yeterli
                         }
                     }
                 });
@@ -97,7 +116,7 @@ exports.handler = async function(event) {
 
         allNews.sort((a, b) => new Date(b.date) - new Date(a.date));
         currentData.newsFeed = allNews.slice(0, 25);
-        currentData.mapStrikes = strikes;
+        currentData.mapStrikes = strikes.slice(0, 15); // Haritayı çok boğmamak için en yeni 15 haberi haritaya bas
 
         // 2. FİNANSAL METRİKLER
         const [brent, wti, gold, gas, vix, silver, uranium, shipping] = await Promise.all([
