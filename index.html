@@ -14,58 +14,44 @@
     <style>
         body { font-family: 'Rajdhani', sans-serif; background-color: #f4f6f8; color: #1a1c1e; }
         
-        /* Harita İkon Animasyonları */
-        @keyframes pulse_red { 0% {transform: scale(0.8); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);} 70% {transform: scale(1.3); box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);} 100% {transform: scale(0.8); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);} }
-        @keyframes pulse_orange { 0% {transform: scale(0.8); box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7);} 70% {transform: scale(1.3); box-shadow: 0 0 0 8px rgba(234, 88, 12, 0);} 100% {transform: scale(0.8); box-shadow: 0 0 0 0 rgba(234, 88, 12, 0);} }
-        @keyframes pulse_blue { 0% {transform: scale(0.8); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);} 70% {transform: scale(1.3); box-shadow: 0 0 0 8px rgba(37, 99, 235, 0);} 100% {transform: scale(0.8); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);} }
+        /* Harita İkon Animasyonları (Senin CSS'inle birebir aynı) */
+        @keyframes pulse_red {0% {transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.6);} 50% {transform: scale(1.2); box-shadow: 0 0 0 6px rgba(255, 0, 0, 0);} 100% {transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);}}
+        @keyframes pulse_orange {0% {transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.6);} 50% {transform: scale(1.2); box-shadow: 0 0 0 6px rgba(255, 165, 0, 0);} 100% {transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 165, 0, 0);}}
+        @keyframes pulse_cyan {0% {transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.6);} 50% {transform: scale(1.2); box-shadow: 0 0 0 6px rgba(0, 255, 255, 0);} 100% {transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 255, 255, 0);}}
 
-        .strike-ir { width: 14px; height: 14px; background-color: #dc2626; border-radius: 50%; border: 2px solid white; animation: pulse_red 1.5s infinite; }
-        .strike-il { width: 14px; height: 14px; background-color: #ea580c; border-radius: 50%; border: 2px solid white; animation: pulse_orange 1.5s infinite; }
-        .strike-us { width: 14px; height: 14px; background-color: #2563eb; border-radius: 50%; border: 2px solid white; animation: pulse_blue 1.5s infinite; }
+        .strike-ir {width: 14px; height: 14px; background-color: #ff0000; border-radius: 50%; border: 1.5px solid white; animation: pulse_red 2.5s infinite;}
+        .strike-il {width: 14px; height: 14px; background-color: #ff9900; border-radius: 50%; border: 1.5px solid white; animation: pulse_orange 2.5s infinite;}
+        .strike-us {width: 14px; height: 14px; background-color: #00ffff; border-radius: 50%; border: 1.5px solid white; animation: pulse_cyan 2.5s infinite;}
         
-        /* Metric Card Hover */
-        .metric-card { background: white; border-left: 4px solid #9ca3af; border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s, border-left-color 0.2s; }
-        .metric-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-left-color: #dc2626; }
-
-        /* Hürmüz Banner Animasyonu */
+        .metric-card { background: white; border-left: 4px solid #9ca3af; border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.3s; }
+        .metric-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(220, 38, 38, 0.2); border-left-color: #dc2626; }
         @keyframes breath { 0% { transform: scale(0.995); box-shadow: 0 4px 6px rgba(0,0,0,0.05); } 100% { transform: scale(1.005); box-shadow: 0 10px 15px currentColor; } }
-        .hurmuz-box { animation: breath 2s infinite alternate ease-in-out; }
-        
-        /* Scrollbar Gizleme */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hurmuz-box { animation: breath 2.5s infinite alternate ease-in-out; }
     </style>
 </head>
 <body class="p-4 md:p-8 max-w-7xl mx-auto">
 
     <header class="flex justify-between items-center mb-6">
         <div>
-            <h1 class="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
-                <span class="text-red-600">⚔️</span> İRAN SAVAŞ MONİTÖRÜ
-            </h1>
-            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1" id="last-update">SON GÜNCELLEME: Yükleniyor...</p>
+            <h1 class="text-3xl font-bold tracking-tight text-gray-900">⚔️ İRAN SAVAŞ MONİTÖRÜ</h1>
+            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1" id="last-update">Veriler Yükleniyor...</p>
         </div>
     </header>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="metrics-container">
-        </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="metrics-container"></div>
 
-    <div id="hurmuz-container" class="hurmuz-box p-4 rounded-xl text-center font-bold text-xl tracking-widest uppercase text-white shadow-md mb-6 transition-colors duration-500 bg-blue-600">
+    <div id="hurmuz-container" class="hurmuz-box p-4 rounded-xl text-center font-bold text-xl tracking-widest uppercase text-white shadow-md mb-6 bg-blue-600">
         🚀 HÜRMÜZ BOĞAZI DURUMU: <span id="hurmuz-text">YÜKLENİYOR...</span>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
         <div class="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-            <div class="px-5 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h2 class="font-bold text-sm uppercase tracking-wider text-gray-800 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-gray-600 text-lg">map</span> STRATEJİK ÇATIŞMA HARİTASI
-                </h2>
+            <div class="px-5 py-3 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                <h2 class="font-bold text-sm uppercase tracking-wider text-gray-800">🗺️ STRATEJİK ÇATIŞMA HARİTASI</h2>
                 <div class="flex gap-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-red-600"></div> İran</span>
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-orange-600"></div> İsrail</span>
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-blue-600"></div> ABD</span>
-                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">star</span> Üs</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#ff0000]"></div> İran</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#ff9900]"></div> İsrail</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#00ffff]"></div> ABD</span>
                 </div>
             </div>
             <div id="map" class="w-full h-[550px] z-10"></div>
@@ -73,37 +59,81 @@
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[600px]">
             <div class="px-5 py-3 border-b border-gray-100 bg-gray-50">
-                <h2 class="font-bold text-sm uppercase tracking-wider text-gray-800 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-gray-600 text-lg">feed</span> CANLI HABER AKIŞI
-                </h2>
+                <h2 class="font-bold text-sm uppercase tracking-wider text-gray-800">📰 CANLI HABER AKIŞI</h2>
             </div>
-            <div id="news-feed" class="overflow-y-auto p-4 space-y-4 no-scrollbar">
-                <p class="text-xs text-gray-500 text-center">Haberler taranıyor...</p>
-            </div>
+            <div id="news-feed" class="overflow-y-auto p-4 space-y-4"></div>
         </div>
     </div>
 
     <script>
-        // 1. HARİTAYI BAŞLAT (Açık Tema / CartoDB Light)
+        // --- 1. HARİTA VE SABİT VERİLER (Senin Streamlit Kodunla Birebir Aynı) ---
         const map = L.map('map').setView([32.0, 48.0], 5);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap', subdomains: 'abcd', maxZoom: 19
-        }).addTo(map);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
 
-        // Sabit Askeri Üsler
-        const askeriUsler = [
-            {isim: "5. Filo (ABD)", lat: 26.20, lon: 50.60},
-            {isim: "Al Udeid (ABD)", lat: 25.11, lon: 51.31},
-            {isim: "Nevatim (İsrail)", lat: 31.20, lon: 35.01},
-            {isim: "İsfahan 8. Üs (İran)", lat: 32.74, lon: 51.86}
+        const askeri_usler = [
+            {"isim": "5. Filo Karargahı (ABD)", "lat": 26.20, "lon": 50.60},
+            {"isim": "Al Udeid Hava Üssü (ABD)", "lat": 25.11, "lon": 51.31},
+            {"isim": "Al Asad Hava Üssü (ABD)", "lat": 33.79, "lon": 42.43},
+            {"isim": "Nevatim Hava Üssü (İsrail)", "lat": 31.20, "lon": 35.01},
+            {"isim": "Hatzerim Hava Üssü (İsrail)", "lat": 31.23, "lon": 34.66},
+            {"isim": "Hayfa Deniz Üssü (İsrail)", "lat": 32.82, "lon": 34.98},
+            {"isim": "İsfahan 8. Taktik Hava Üssü (İran)", "lat": 32.74, "lon": 51.86},
+            {"isim": "Bender Abbas Deniz Üssü (İran)", "lat": 27.15, "lon": 56.19},
+            {"isim": "Hamedan Nojeh Hava Üssü (İran)", "lat": 35.20, "lon": 48.65}
         ];
 
-        askeriUsler.forEach(us => {
-            const star = L.divIcon({ html: '<span class="material-symbols-outlined text-gray-400" style="font-size:18px;">star</span>', className: '' });
-            L.marker([us.lat, us.lon], {icon: star}).addTo(map).bindPopup(`<b class="text-[10px] uppercase font-bold text-gray-700">${us.isim}</b>`);
+        const sabit_olaylar = [
+            {"isim": "Parchin Askeri Kompleksi", "lat": 35.53, "lon": 51.77, "actor": "il", "desc": "Tahran Yakını Füze Üretim Tesisi Vuruldu"},
+            {"isim": "İsfahan Radar Sistemi", "lat": 32.65, "lon": 51.66, "actor": "il", "desc": "S-300 Bataryaları İmha Edildi"},
+            {"isim": "Natanz Nükleer Tesisi Çevresi", "lat": 33.97, "lon": 51.92, "actor": "il", "desc": "Hava Savunma Hatlarına Önleyici Vuruş"},
+            {"isim": "Bandar Abbas Limanı", "lat": 27.18, "lon": 56.28, "actor": "il", "desc": "İran Donanması Hızlı Hücumbotları Vuruldu"},
+            {"isim": "Tebriz Füze Siloları", "lat": 38.07, "lon": 46.29, "actor": "il", "desc": "Yeraltı Silolarına F-35 Operasyonu"},
+            {"isim": "Semnan Uzay ve Füze Merkezi", "lat": 35.58, "lon": 53.39, "actor": "il", "desc": "Balistik Füze Fırlatma Rampaları Vuruldu"},
+            {"isim": "Meşhed Hava Üssü Çevresi", "lat": 36.26, "lon": 59.61, "actor": "il", "desc": "Erken Uyarı Radarları Etkisiz Hale Getirildi"},
+            {"isim": "Ahvaz Petrol Altyapısı", "lat": 31.31, "lon": 48.67, "actor": "il", "desc": "Güneydeki Kritik Rafinerilerde Hasar Bildirildi"},
+            {"isim": "Beyrut Dahiye Merkez", "lat": 33.85, "lon": 35.51, "actor": "il", "desc": "Hizbullah Üst Düzey Komuta Merkezi Vuruldu"},
+            {"isim": "Hudeyde Limanı (Yemen)", "lat": 14.79, "lon": 42.95, "actor": "il", "desc": "Husi Petrol Depoları İsrail F-15'lerince Vuruldu"},
+            {"isim": "Nevatim Hava Üssü", "lat": 31.20, "lon": 35.01, "actor": "ir", "desc": "Balistik Füze Yağmuru - Pistlerde Hasar"},
+            {"isim": "Ramon Hava Üssü", "lat": 30.77, "lon": 34.67, "actor": "ir", "desc": "Fettah Hipersonik Füzeleri Hedef Aldı"},
+            {"isim": "Meron Hava Kontrol Üssü", "lat": 32.99, "lon": 35.41, "actor": "ir", "desc": "Hizbullah Anti-Tank Füzeleriyle Radar Vurdu"},
+            {"isim": "Tel Aviv (Kuzey Banliyöleri)", "lat": 32.11, "lon": 34.80, "actor": "ir", "desc": "Demir Kubbe'yi aşan füzeler sivil binalara isabet etti"},
+            {"isim": "Erbil ABD Konsolosluğu Yakını", "lat": 36.23, "lon": 44.01, "actor": "ir", "desc": "Mossad Karargahı İddiasıyla Balistik Atış"},
+            {"isim": "Sanaa Yeraltı Depoları", "lat": 15.36, "lon": 44.19, "actor": "us", "desc": "B-2 Spirit Bombardıman Uçakları Vurdu"}
+        ];
+
+        // Üsleri Haritaya Bas
+        askeri_usler.forEach(us => {
+            const star = L.divIcon({ html: '<span class="material-symbols-outlined text-gray-500" style="font-size:22px;">star</span>', className: '' });
+            L.marker([us.lat, us.lon], {icon: star}).addTo(map).bindPopup(`<b style='color:black;'>🛡️ ${us.isim}</b>`);
         });
 
-        // 2. VERİLERİ ÇEK VE ARAYÜZÜ OLUŞTUR
+        // İşaretleyici Oluşturma Fonksiyonu (Python'daki Popup mantığının aynısı)
+        function addStrikeMarker(olay) {
+            const cls = olay.actor === "ir" ? "strike-ir" : olay.actor === "il" ? "strike-il" : "strike-us";
+            const border = olay.actor === "ir" ? "#ff0000" : olay.actor === "il" ? "#ff9900" : "#00ffff";
+            const title = olay.isim || olay.city || "SALDIRI NOKTASI";
+            const desc = olay.desc || olay.title || "";
+            const link = olay.link || `https://news.google.com/search?q=${title}&hl=tr&gl=TR&ceid=TR:tr`;
+
+            const popupHtml = `
+                <div style='color:white; background:#111; padding:12px; border-radius:6px; border:1px solid ${border}; width:220px; font-family:"Rajdhani", sans-serif;'>
+                    <b style='color:${border}; font-size:15px;'>📍 ${title}</b><br>
+                    <hr style='margin:6px 0; border-color:#333;'>
+                    <span style='font-size:13px; color:#ddd;'>${desc}</span><br>
+                    <a href='${link}' target='_blank' style='display:inline-block; margin-top:10px; color:#111; background-color:${border}; text-decoration:none; font-size:12px; padding:5px 10px; border-radius:4px; font-weight:bold;'>🔗 HABERE GİT</a>
+                </div>
+            `;
+            
+            const icon = L.divIcon({ html: `<div class="${cls}"></div>`, className: '' });
+            L.marker([olay.lat, olay.lon], {icon: icon}).addTo(map).bindPopup(popupHtml);
+        }
+
+        // Sabit Olayları Haritaya Bas
+        sabit_olaylar.forEach(olay => addStrikeMarker(olay));
+
+        // --- 2. CANLI VERİLERİ (API) ÇEK VE ARAYÜZÜ DOLDUR ---
+        let dynamicMarkers = [];
+
         async function loadDashboard() {
             try {
                 const res = await fetch('/api/state?t=' + Date.now());
@@ -111,61 +141,49 @@
                 
                 document.getElementById('last-update').innerText = `SON GÜNCELLEME: ${data.lastUpdated}`;
 
-                // --- METRİKLER ---
+                // Metrikleri Doldur
                 const m = data.market || {};
-                const man = data.manual || {};
-                const formatPct = (val) => val > 0 ? `<span class="text-green-600">+${val}%</span>` : `<span class="text-red-600">${val}%</span>`;
+                const man = data.manual || { polyester: 1250, gubre: 480, jetFuel: 85.2, cds: 265 }; // Eğer boşsa senin defaultların
+                const formatPct = (val) => val > 0 ? `<span class="text-green-600">+${val}%</span>` : val < 0 ? `<span class="text-red-600">${val}%</span>` : `<span class="text-gray-400">0%</span>`;
                 
                 document.getElementById('metrics-container').innerHTML = `
-                    <div class="metric-card"><div class="text-xs font-bold text-gray-500">Brent Petrol</div><div class="text-xl font-bold">$${m.brent} <span class="text-sm">${formatPct(m.brentPct)}</span></div></div>
+                    <div class="metric-card"><div class="text-xs font-bold text-gray-500">Brent Vadeli</div><div class="text-xl font-bold">$${m.brent} <span class="text-sm">${formatPct(m.brentPct)}</span></div></div>
+                    <div class="metric-card"><div class="text-xs font-bold text-gray-500">Sıvı Hidrok. (WTI)</div><div class="text-xl font-bold">$${m.wti}</div></div>
                     <div class="metric-card"><div class="text-xs font-bold text-gray-500">Altın (Ons)</div><div class="text-xl font-bold">$${m.gold} <span class="text-sm">${formatPct(m.goldPct)}</span></div></div>
-                    <div class="metric-card"><div class="text-xs font-bold text-gray-500">Doğal Gaz (Avrupa)</div><div class="text-xl font-bold">€${m.gas} <span class="text-sm">${formatPct(m.gasPct)}</span></div></div>
-                    <div class="metric-card"><div class="text-xs font-bold text-gray-500">VIX (Korku Endeksi)</div><div class="text-xl font-bold">${m.vix} <span class="text-sm">${formatPct(m.vixPct)}</span></div></div>
-                    
-                    <div class="metric-card"><div class="text-xs font-bold text-gray-500">Jet Yakıtı (Mnl)</div><div class="text-xl font-bold">$${man.jetFuel}</div></div>
+                    <div class="metric-card"><div class="text-xs font-bold text-gray-500">Avrupa Doğal Gaz</div><div class="text-xl font-bold">€${m.gas} <span class="text-sm">${formatPct(m.gasPct)}</span></div></div>
+                    <div class="metric-card"><div class="text-xs font-bold text-gray-500">VIX (Korku)</div><div class="text-xl font-bold">${m.vix} <span class="text-sm">${formatPct(m.vixPct)}</span></div></div>
+                    <div class="metric-card"><div class="text-xs font-bold text-gray-500">Jet Yakıt (Mnl)</div><div class="text-xl font-bold">$${man.jetFuel}</div></div>
                     <div class="metric-card"><div class="text-xs font-bold text-gray-500">Polyester (Mnl)</div><div class="text-xl font-bold">$${man.polyester}</div></div>
-                    <div class="metric-card"><div class="text-xs font-bold text-gray-500">Gübre (Mnl)</div><div class="text-xl font-bold">$${man.gubre}</div></div>
                     <div class="metric-card"><div class="text-xs font-bold text-gray-500">Türkiye 5Y CDS (Mnl)</div><div class="text-xl font-bold">${man.cds}</div></div>
                 `;
 
-                // --- HÜRMÜZ BANNER ---
+                // Hürmüz Durumu
                 const hBox = document.getElementById('hurmuz-container');
-                document.getElementById('hurmuz-text').innerText = data.hurmuzStatus;
-                hBox.style.backgroundColor = data.hurmuzStatus.includes("AÇIK") ? "#2563eb" : data.hurmuzStatus.includes("KAPALI") ? "#dc2626" : "#ea580c";
+                const hurmuzDurum = data.hurmuzStatus || "AÇIK / GÜVENLİ";
+                document.getElementById('hurmuz-text').innerText = hurmuzDurum;
+                hBox.style.backgroundColor = hurmuzDurum.includes("AÇIK") ? "#2563eb" : hurmuzDurum.includes("KAPALI") ? "#dc2626" : "#ea580c";
 
-                // --- HARİTA ÇATIŞMALARI (BOTUN TARADIKLARI) ---
+                // Botun Bulduğu Yeni Haberleri Haritaya Ekle (Eskileri silip yenilerini ekle)
+                dynamicMarkers.forEach(m => map.removeLayer(m));
+                dynamicMarkers = [];
                 if(data.mapStrikes) {
-                    data.mapStrikes.forEach(olay => {
-                        const cls = olay.actor === "ir" ? "strike-ir" : olay.actor === "il" ? "strike-il" : "strike-us";
-                        const icon = L.divIcon({ html: `<div class="${cls}"></div>`, className: '' });
-                        
-                        L.marker([olay.lat, olay.lon], {icon: icon}).addTo(map)
-                        .bindPopup(`
-                            <div class="font-sans">
-                                <b class="text-[11px] uppercase font-black text-red-600">📍 ${olay.city}</b><br>
-                                <span class="text-[10px] text-gray-700 leading-tight block mt-1">${olay.title}</span>
-                                <a href="${olay.link}" target="_blank" class="text-[9px] font-bold text-blue-600 mt-2 block underline">Habere Git</a>
-                            </div>
-                        `);
-                    });
+                    data.mapStrikes.forEach(olay => addStrikeMarker(olay));
                 }
 
-                // --- HABER AKIŞI ---
-                const feedContainer = document.getElementById('news-feed');
-                if(data.newsFeed && data.newsFeed.length > 0) {
-                    feedContainer.innerHTML = data.newsFeed.map(n => `
+                // Haber Akışını Doldur
+                if(data.newsFeed) {
+                    document.getElementById('news-feed').innerHTML = data.newsFeed.map(n => `
                         <div class="border-b border-gray-100 pb-3">
                             <a href="${n.link}" target="_blank" class="text-sm font-semibold text-gray-800 hover:text-red-600 transition block leading-tight">${n.title}</a>
-                            <span class="text-[10px] text-gray-400 mt-1 block">${new Date(n.date).toLocaleString('tr-TR')}</span>
                         </div>
                     `).join('');
                 }
 
-            } catch (err) { console.error("Veri çekilemedi:", err); }
+            } catch (err) { console.error("API okunamadı:", err); }
         }
 
         loadDashboard();
-        setInterval(loadDashboard, 60000); // Her dakikada bir arayüzü güncelle
+        setInterval(loadDashboard, 60000); // 1 dakikada bir güncelle
     </script>
 </body>
 </html>
