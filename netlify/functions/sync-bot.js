@@ -1,8 +1,11 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore, connectLambda } = require('@netlify/blobs');
 const Parser = require('rss-parser');
 const parser = new Parser({ headers: { 'User-Agent': 'Mozilla/5.0' } });
 
 exports.handler = async function(event) {
+    // SİLDİĞİM SATIRI GERİ EKLEDİM: Netlify Blobs kimlik doğrulaması için zorunluymuş!
+    connectLambda(event);
+
     try {
         // 1. GÜVENLİ PIN KONTROLÜ (Base64 Çözücü Eklendi)
         if (event.httpMethod === "POST" && event.body) {
@@ -14,11 +17,11 @@ exports.handler = async function(event) {
             
             const body = JSON.parse(payload);
             if (body.pin !== "isedes") {
-                return { statusCode: 403, body: JSON.stringify({ error: "Gerçekten Yanlış PIN girdin." }) };
+                return { statusCode: 403, body: JSON.stringify({ error: "Yanlış PIN girdin." }) };
             }
         }
 
-        // 2. YAHOO FINANCE PAKETİNİ MODERN YÖNTEMLE DİNAMİK OLARAK ÇAĞIR (Çökme Sebebi Çözüldü)
+        // 2. YAHOO FINANCE PAKETİNİ MODERN YÖNTEMLE DİNAMİK OLARAK ÇAĞIR (Modül çökmesini önler)
         const yahooFinanceModule = await import('yahoo-finance2');
         const yahooFinance = yahooFinanceModule.default;
 
@@ -44,7 +47,7 @@ exports.handler = async function(event) {
         if (!currentData) return { statusCode: 404, body: JSON.stringify({ error: "Veritabanı bulunamadı." }) };
         if (!currentData.market) currentData.market = {};
 
-        // 4. TOPLU PİYASA ÇEKİMİ (Çökmeyi Önler)
+        // 4. TOPLU PİYASA ÇEKİMİ
         const symbolsToFetch = [];
         const symbolToKey = {};
 
@@ -119,7 +122,6 @@ exports.handler = async function(event) {
         return { statusCode: 200, body: JSON.stringify({ success: true, message: "Bot başarıyla çalıştı!" }) };
 
     } catch (error) {
-        // EĞER SİSTEM YİNE ÇÖKERSE, hatanın TAM OLARAK ne olduğunu konsola ve ekrana basacak.
         return { statusCode: 500, body: JSON.stringify({ error: "Sistem Çöktü: " + error.message }) };
     }
 };
