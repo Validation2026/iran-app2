@@ -1,23 +1,6 @@
-const { getStore } = require('@netlify/blobs'); // connectLambda silindi, sistemi çökertebiliyordu
+const { getStore } = require('@netlify/blobs');
 const Parser = require('rss-parser');
 const parser = new Parser({ headers: { 'User-Agent': 'Mozilla/5.0' } });
-const yahooFinance = require('yahoo-finance2').default;
-
-const tickers = {
-    brent: 'BZ=F',       
-    gold: 'XAU=X',       
-    silver: 'XAG=X',     
-    usGas: 'NG=F',       
-    wheat: 'ZW=F',       
-    corn: 'ZC=F',        
-    copper: 'HG=F',      
-    vix: '^VIX',         
-    uranium: 'URA',      
-    lithium: 'LIT',      
-    shipping: 'BDRY',    
-    iron: 'TIO=F',       
-    gas: 'TTF=F'         
-};
 
 exports.handler = async function(event) {
     try {
@@ -35,13 +18,33 @@ exports.handler = async function(event) {
             }
         }
 
-        // 2. VERİTABANI BAĞLANTISI
+        // 2. YAHOO FINANCE PAKETİNİ MODERN YÖNTEMLE DİNAMİK OLARAK ÇAĞIR (Çökme Sebebi Çözüldü)
+        const yahooFinanceModule = await import('yahoo-finance2');
+        const yahooFinance = yahooFinanceModule.default;
+
+        const tickers = {
+            brent: 'BZ=F',       
+            gold: 'XAU=X',       
+            silver: 'XAG=X',     
+            usGas: 'NG=F',       
+            wheat: 'ZW=F',       
+            corn: 'ZC=F',        
+            copper: 'HG=F',      
+            vix: '^VIX',         
+            uranium: 'URA',      
+            lithium: 'LIT',      
+            shipping: 'BDRY',    
+            iron: 'TIO=F',       
+            gas: 'TTF=F'         
+        };
+
+        // 3. VERİTABANI BAĞLANTISI
         const store = getStore("iran-risk");
         let currentData = await store.get("state", { type: "json" });
         if (!currentData) return { statusCode: 404, body: JSON.stringify({ error: "Veritabanı bulunamadı." }) };
         if (!currentData.market) currentData.market = {};
 
-        // 3. TOPLU PİYASA ÇEKİMİ (Çökmeyi Önler)
+        // 4. TOPLU PİYASA ÇEKİMİ (Çökmeyi Önler)
         const symbolsToFetch = [];
         const symbolToKey = {};
 
@@ -69,7 +72,7 @@ exports.handler = async function(event) {
             }
         }
 
-        // 4. HABER VE HARİTA VERİLERİ
+        // 5. HABER VE HARİTA VERİLERİ
         const news_keywords = {
             "tahran": [35.68, 51.38, "il"], "isfahan": [32.65, 51.66, "il"], "iran": [35.68, 51.38, "il"],
             "tel aviv": [32.08, 34.78, "ir"], "kudüs": [31.76, 35.21, "ir"], "israil": [31.76, 35.21, "ir"],
