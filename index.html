@@ -102,8 +102,12 @@
         ];
 
         // Üsleri Haritaya Bas
+        // Üsleri Haritaya Bas
         askeri_usler.forEach(us => {
-            const star = L.divIcon({ html: '<span class="material-symbols-outlined text-gray-500" style="font-size:22px;">star</span>', className: '' });
+            const star = L.divIcon({ 
+                html: '<span class="material-symbols-outlined text-gray-600" style="font-family: \'Material Symbols Outlined\' !important; font-size:22px; text-shadow: 0 0 5px white;">star</span>', 
+                className: '' 
+            });
             L.marker([us.lat, us.lon], {icon: star}).addTo(map).bindPopup(`<b style='color:black;'>🛡️ ${us.isim}</b>`);
         });
 
