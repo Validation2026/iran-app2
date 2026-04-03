@@ -1,4 +1,4 @@
-const { getStore, connectLambda } = require('@netlify/blobs');
+const { getStore } = require('@netlify/blobs'); // connectLambda silindi, sistemi çökertebiliyordu
 const Parser = require('rss-parser');
 const parser = new Parser({ headers: { 'User-Agent': 'Mozilla/5.0' } });
 const yahooFinance = require('yahoo-finance2').default;
@@ -20,51 +20,41 @@ const tickers = {
 };
 
 exports.handler = async function(event) {
-    connectLambda(event);
-    
-    // NETLIFY BASE64 DEKODER VE PIN KONTROLÜ
-    if (event.httpMethod === "POST" && event.body) {
-        try {
-            // Netlify veriyi şifrelediyse önce onu çöz
+    try {
+        // 1. GÜVENLİ PIN KONTROLÜ (Base64 Çözücü Eklendi)
+        if (event.httpMethod === "POST" && event.body) {
             let payload = event.body;
+            // Netlify bazen veriyi şifreli gönderir, onu çözüyoruz
             if (event.isBase64Encoded) {
                 payload = Buffer.from(event.body, 'base64').toString('utf-8');
             }
             
             const body = JSON.parse(payload);
-            
-            // Eğer girilen PIN 'isedes' değilse reddet
             if (body.pin !== "isedes") {
-                return { statusCode: 403, body: JSON.stringify({ error: "Yanlış PIN girdiniz!" }) };
+                return { statusCode: 403, body: JSON.stringify({ error: "Gerçekten Yanlış PIN girdin." }) };
             }
-        } catch (e) {
-            return { statusCode: 400, body: JSON.stringify({ error: "Geçersiz istek formatı!" }) };
         }
-    }
 
-    try {
+        // 2. VERİTABANI BAĞLANTISI
         const store = getStore("iran-risk");
         let currentData = await store.get("state", { type: "json" });
-        if (!currentData) return { statusCode: 404, body: "State not found" };
+        if (!currentData) return { statusCode: 404, body: JSON.stringify({ error: "Veritabanı bulunamadı." }) };
         if (!currentData.market) currentData.market = {};
 
-        // 1. ZAMAN AŞIMINI ENGELLEMEK İÇİN TOPLU İSTEK HAZIRLIĞI
+        // 3. TOPLU PİYASA ÇEKİMİ (Çökmeyi Önler)
         const symbolsToFetch = [];
-        const symbolToKey = {}; // Hangi Yahoo sembolünün senin sistemindeki hangi kelimeye (örn: brent, gold) denk geldiğini tutar
+        const symbolToKey = {};
 
         for (const [key, symbol] of Object.entries(tickers)) {
-            // Admin panelinden kilitli (manuel) DEĞİLSE listeye ekle
             if (!currentData.lockedMetrics || !currentData.lockedMetrics[key]) {
                 symbolsToFetch.push(symbol);
                 symbolToKey[symbol] = key; 
             }
         }
 
-        // 2. TÜM PİYASAYI TEK SEFERDE ÇEK (Yarım saniye sürer, Netlify'ı çökertmez)
         if (symbolsToFetch.length > 0) {
             try {
                 const quotes = await yahooFinance.quote(symbolsToFetch);
-                // Gelen veriyi dizi formuna çevir
                 const quoteArray = Array.isArray(quotes) ? quotes : [quotes];
                 
                 for (const q of quoteArray) {
@@ -75,11 +65,11 @@ exports.handler = async function(event) {
                     }
                 }
             } catch (e) {
-                console.log("[UYARI] Toplu veri çekimi hatası:", e.message);
+                console.log("[UYARI] Yahoo Finance Hatası:", e.message);
             }
         }
 
-        // 3. HABER VE HARİTA BÖLÜMÜ (Aynı kaldı)
+        // 4. HABER VE HARİTA VERİLERİ
         const news_keywords = {
             "tahran": [35.68, 51.38, "il"], "isfahan": [32.65, 51.66, "il"], "iran": [35.68, 51.38, "il"],
             "tel aviv": [32.08, 34.78, "ir"], "kudüs": [31.76, 35.21, "ir"], "israil": [31.76, 35.21, "ir"],
@@ -121,11 +111,12 @@ exports.handler = async function(event) {
 
         currentData.lastUpdated = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
         
-        // 4. Veritabanını Güncelle
         await store.setJSON("state", currentData);
 
-        return { statusCode: 200, body: JSON.stringify({ success: true, message: "Piyasa saniyesinde toplu çekildi." }) };
-    } catch (error) { 
-        return { statusCode: 500, body: JSON.stringify({ error: error.message }) }; 
+        return { statusCode: 200, body: JSON.stringify({ success: true, message: "Bot başarıyla çalıştı!" }) };
+
+    } catch (error) {
+        // EĞER SİSTEM YİNE ÇÖKERSE, hatanın TAM OLARAK ne olduğunu konsola ve ekrana basacak.
+        return { statusCode: 500, body: JSON.stringify({ error: "Sistem Çöktü: " + error.message }) };
     }
 };
