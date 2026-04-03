@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore, connectLambda } = require('@netlify/blobs');
 const Parser = require('rss-parser');
 const yahooFinance = require('yahoo-finance2').default;
 
@@ -25,6 +25,9 @@ const geo_db = {
 const jitter = (val) => val + (Math.random() * 0.1 - 0.05);
 
 exports.handler = async function(event) {
+    // Ortam değişkenlerini bağlamak için bu satır şart:
+    connectLambda(event);
+
     if (event.body) {
         const body = JSON.parse(event.body);
         if (body.pin !== "isedes") return { statusCode: 403, body: JSON.stringify({ error: "Unauthorized" }) };
