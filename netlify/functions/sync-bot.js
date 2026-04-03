@@ -1,5 +1,6 @@
 const { getStore, connectLambda } = require('@netlify/blobs');
 const Parser = require('rss-parser');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const parser = new Parser({
     headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
@@ -9,7 +10,8 @@ const defaultData = {
     version: "3.0.0",
     lastUpdated: "Henüz güncellenmedi",
     hurmuzStatus: "AÇIK / GÜVENLİ",
-    market: { brent: 0, brentPct: 0, wti: 0, gold: 0, goldPct: 0, gas: 0, gasPct: 0, vix: 0, vixPct: 0 },
+    aiAnalysis: "Yapay zeka analizi henüz oluşturulmadı.",
+    market: { brent: 0, brentPct: 0, wti: 0, gold: 0, goldPct: 0, gas: 0, gasPct: 0, vix: 0, vixPct: 0, silver: 0, silverPct: 0, uranium: 0, uraniumPct: 0, shipping: 0, shippingPct: 0 },
     manual: { polyester: 1250, gubre: 480, jetFuel: 85.2, cds: 265 },
     mapStrikes: [],
     newsFeed: []
@@ -25,7 +27,6 @@ const geo_db = {
 
 const jitter = (val) => val + (Math.random() * 0.1 - 0.05);
 
-// Yahoo'nun engellemediği v8 Chart API'si
 async function getTicker(symbol) {
     try {
         const url = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`;
@@ -84,9 +85,10 @@ exports.handler = async function(event) {
         currentData.newsFeed = allNews.slice(0, 25);
         currentData.mapStrikes = strikes;
 
-        // 2. FİNANSAL METRİKLER (Engel Yemeyen Metot)
-        const [brent, wti, gold, gas, vix] = await Promise.all([
-            getTicker('BZ=F'), getTicker('CL=F'), getTicker('GC=F'), getTicker('TTF=F'), getTicker('^VIX')
+        // 2. GENİŞLETİLMİŞ FİNANSAL METRİKLER
+        const [brent, wti, gold, gas, vix, silver, uranium, shipping] = await Promise.all([
+            getTicker('BZ=F'), getTicker('CL=F'), getTicker('GC=F'), getTicker('TTF=F'), 
+            getTicker('^VIX'), getTicker('SI=F'), getTicker('URA'), getTicker('BDRY')
         ]);
 
         currentData.market = {
@@ -94,8 +96,40 @@ exports.handler = async function(event) {
             wti: wti.price,
             gold: gold.price, goldPct: gold.pct,
             gas: gas.price, gasPct: gas.pct,
-            vix: vix.price, vixPct: vix.pct
+            vix: vix.price, vixPct: vix.pct,
+            silver: silver.price, silverPct: silver.pct,
+            uranium: uranium.price, uraniumPct: uranium.pct,
+            shipping: shipping.price, shippingPct: shipping.pct
         };
+
+        // 3. YAPAY ZEKA RİSK ANALİZİ (GEMINI AI)
+        if (process.env.GEMINI_API_KEY) {
+            try {
+                const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                
+                // AI'a vereceğimiz spesifik bağlam
+                const prompt = `Sen kıdemli bir jeopolitik risk ve küresel emtia analistisin. 
+                Aşağıdaki güncel verilere bakarak yöneticiler için 3-4 cümlelik çok kritik, net ve profesyonel bir piyasa/savaş durum analizi yaz. Özellikle enerji ve tedarik zincirine vurgu yap.
+                
+                GÜNCEL DURUM:
+                - Hürmüz Boğazı: ${currentData.hurmuzStatus}
+                - Brent Petrol Fiyatı: $${currentData.market.brent}
+                - Korku Endeksi (VIX): ${currentData.market.vix}
+                - Taşımacılık/Navlun Endeksi (BDRY): ${currentData.market.shipping}
+                - Öne Çıkan Son Haberler: ${allNews.slice(0, 3).map(n => n.title).join(" | ")}
+                
+                Yanıtta sadece analizi yaz, "Merhaba, işte analiz" gibi giriş kelimeleri kullanma. Dili resmi Türkçe olsun.`;
+
+                const result = await model.generateContent(prompt);
+                currentData.aiAnalysis = result.response.text();
+            } catch (aiErr) {
+                console.error("AI Hatası:", aiErr);
+                currentData.aiAnalysis = "Yapay zeka analizi şu an oluşturulamadı (Servis yoğunluğu veya bağlantı hatası).";
+            }
+        } else {
+            currentData.aiAnalysis = "AI Entegrasyonu pasif. Lütfen Netlify üzerinden GEMINI_API_KEY ortam değişkenini ayarlayın.";
+        }
 
         currentData.lastUpdated = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
 
