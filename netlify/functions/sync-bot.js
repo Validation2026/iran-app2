@@ -16,30 +16,21 @@ const defaultData = {
     newsFeed: []
 };
 
-const geo_db = {
-    // İRAN
-    "Tahran": [35.68, 51.38, "il"], "İsfahan": [32.65, 51.66, "il"], "Natanz": [33.97, 51.92, "il"],
-    "Tebriz": [38.07, 46.29, "il"], "Şiraz": [29.59, 52.58, "il"], "Buşehr": [28.92, 50.83, "il"],
-    "Ahvaz": [31.31, 48.67, "il"], "Bender Abbas": [27.18, 56.28, "il"], "Meşhed": [36.26, 59.61, "il"],
-    "Kerec": [35.83, 50.99, "il"], "Kum": [34.64, 50.87, "il"], "Hemedan": [35.19, 48.65, "il"],
-
-    // İSRAİL
-    "Tel Aviv": [32.08, 34.78, "ir"], "Kudüs": [31.76, 35.21, "ir"], "Hayfa": [32.79, 34.98, "ir"],
-    "Eilat": [29.55, 34.95, "ir"], "Aşkelon": [31.66, 34.57, "ir"], "Aşdod": [31.80, 34.65, "ir"],
-    "Safed": [32.96, 35.49, "ir"], "Dimona": [31.07, 35.02, "ir"], "Meron": [32.99, 35.41, "ir"],
-    "Golan": [33.01, 35.75, "ir"], "Negev": [30.80, 34.84, "ir"],
-
-    // LÜBNAN & SURİYE
-    "Beyrut": [33.89, 35.50, "il"], "Dahiye": [33.85, 35.51, "il"], "Baalbek": [34.00, 36.21, "il"],
-    "Şam": [33.51, 36.29, "il"], "Halep": [36.20, 37.13, "il"], "Deyrizor": [35.33, 40.14, "us"],
-
-    // IRAK & YEMEN (KIZILDENİZ)
-    "Bağdat": [33.31, 44.36, "us"], "Erbil": [36.19, 44.00, "ir"], 
-    "Sanaa": [15.36, 44.19, "us"], "Hudeyde": [14.79, 42.95, "il"],
-    "Kızıldeniz": [15.00, 41.50, "ir"], "Hürmüz": [26.56, 56.45, "ir"]
+// Akıllı Haber Okuma Sözlüğü (Dev Liste)
+const news_keywords = {
+    // Şehirler ve Ülkeler
+    "tahran": [35.68, 51.38, "il"], "isfahan": [32.65, 51.66, "il"], "iran": [35.68, 51.38, "il"],
+    "tel aviv": [32.08, 34.78, "ir"], "kudüs": [31.76, 35.21, "ir"], "israil": [31.76, 35.21, "ir"],
+    "beyrut": [33.89, 35.50, "il"], "lübnan": [33.89, 35.50, "il"], "hizbullah": [33.89, 35.50, "il"],
+    "şam": [33.51, 36.29, "il"], "suriye": [33.51, 36.29, "il"], "halep": [36.20, 37.13, "il"],
+    "sanaa": [15.36, 44.19, "us"], "yemen": [15.36, 44.19, "us"], "husi": [14.79, 42.95, "il"],
+    "kızıldeniz": [15.00, 41.50, "ir"], "erbil": [36.19, 44.00, "ir"], "irak": [33.31, 44.36, "us"],
+    "harg": [29.23, 50.32, "il"], "natanz": [33.97, 51.92, "il"], "bekaa": [33.99, 36.14, "il"],
+    "lazkiye": [35.52, 35.79, "il"], "humus": [34.52, 37.62, "il"], "golan": [33.01, 35.75, "ir"]
 };
 
-const jitter = (val) => val + (Math.random() * 0.1 - 0.05);
+// Haritada noktalar tam üst üste binmesin diye hafif kaydırma
+const jitter = (val) => val + (Math.random() * 0.2 - 0.1);
 
 async function getTicker(symbol) {
     try {
@@ -69,23 +60,10 @@ exports.handler = async function(event) {
         let currentData = await store.get("state", { type: "json" });
         if (!currentData) currentData = defaultData;
 
-        // 1. HABER TARAMASI
-        // 1. HABER TARAMASI VE AKILLI LOKASYON BULUCU
+        // 1. HABER TARAMASI VE AKILLI LOKASYON TESPİTİ
         const queries = ["İran+saldırı", "İsrail+füze", "Lübnan+vuruldu", "Husiler+saldırdı", "Suriye+hava+harekatı"];
         let allNews = [];
         let strikes = [];
-
-        // Botun haber başlıklarında arayacağı kelimeler (Genişletilmiş)
-        const news_keywords = {
-            "tahran": [35.68, 51.38, "il"], "isfahan": [32.65, 51.66, "il"], "iran": [35.68, 51.38, "il"],
-            "tel aviv": [32.08, 34.78, "ir"], "kudüs": [31.76, 35.21, "ir"], "israil": [31.76, 35.21, "ir"],
-            "beyrut": [33.89, 35.50, "il"], "lübnan": [33.89, 35.50, "il"], "hizbullah": [33.89, 35.50, "il"],
-            "şam": [33.51, 36.29, "il"], "suriye": [33.51, 36.29, "il"], "halep": [36.20, 37.13, "il"],
-            "sanaa": [15.36, 44.19, "us"], "yemen": [15.36, 44.19, "us"], "husi": [14.79, 42.95, "il"],
-            "kızıldeniz": [15.00, 41.50, "ir"], "erbil": [36.19, 44.00, "ir"], "irak": [33.31, 44.36, "us"]
-        };
-
-        const jitter = (val) => val + (Math.random() * 0.2 - 0.1); // Haritada üst üste binmesin diye hafif kaydırma
 
         for (const q of queries) {
             try {
@@ -95,7 +73,6 @@ exports.handler = async function(event) {
                         allNews.push({ title: item.title, link: item.link, date: item.isoDate });
                     }
                     
-                    // Haberin başlığını küçük harfe çevirip kelime arıyoruz
                     const titleLower = item.title.toLowerCase();
                     for (const [keyword, data] of Object.entries(news_keywords)) {
                         if (titleLower.includes(keyword)) {
@@ -107,7 +84,7 @@ exports.handler = async function(event) {
                                 title: item.title, 
                                 link: item.link
                             });
-                            break; // Bir haber için bir nokta yeterli
+                            break;
                         }
                     }
                 });
@@ -116,9 +93,9 @@ exports.handler = async function(event) {
 
         allNews.sort((a, b) => new Date(b.date) - new Date(a.date));
         currentData.newsFeed = allNews.slice(0, 25);
-        currentData.mapStrikes = strikes.slice(0, 15); // Haritayı çok boğmamak için en yeni 15 haberi haritaya bas
+        currentData.mapStrikes = strikes.slice(0, 15); // Haritayı çok boğmamak için max 15 canlı haber işareti
 
-        // 2. FİNANSAL METRİKLER
+        // 2. FİNANSAL METRİKLER (Güvenli Yahoo v8 API'si)
         const [brent, wti, gold, gas, vix, silver, uranium, shipping] = await Promise.all([
             getTicker('BZ=F'), getTicker('CL=F'), getTicker('GC=F'), getTicker('TTF=F'), 
             getTicker('^VIX'), getTicker('SI=F'), getTicker('URA'), getTicker('BDRY')
@@ -130,7 +107,7 @@ exports.handler = async function(event) {
             uranium: uranium.price, uraniumPct: uranium.pct, shipping: shipping.price, shippingPct: shipping.pct
         };
 
-        // 3. SENARYO TABANLI (KOLPA) YAPAY ZEKA MANTIĞI
+        // 3. STATİK RİSK SENARYOSU (Sahte Yapay Zeka)
         let hurmuz = currentData.hurmuzStatus || "AÇIK";
         let brentPrice = parseFloat(brent.price) || 0;
         let aiText = "";
