@@ -198,11 +198,13 @@
                 hBox.style.backgroundColor = hurmuzDurum.includes("AÇIK") ? "#2563eb" : hurmuzDurum.includes("KAPALI") ? "#dc2626" : "#ea580c";
 
                 // Metrikler
+                // Metrikler (Otomatik + Modüler Manuel)
                 const m = data.market || {};
-                const man = data.manual || { polyester: 0, gubre: 0, jetFuel: 0, cds: 0 };
+                const manualList = data.manualMetrics || [];
                 const formatPct = (val) => val > 0 ? `<span class="text-green-600">+${val}%</span>` : val < 0 ? `<span class="text-red-600">${val}%</span>` : `<span class="text-gray-400">0%</span>`;
                 
-                document.getElementById('metrics-container').innerHTML = `
+                // 1. Önce API'den gelen otomatik verileri diziyoruz
+                let metricsHtml = `
                     <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Brent Petrol</div><div class="text-xl font-bold">$${m.brent} <span class="text-sm">${formatPct(m.brentPct)}</span></div></div>
                     <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Doğal Gaz (Avrupa)</div><div class="text-xl font-bold">€${m.gas} <span class="text-sm">${formatPct(m.gasPct)}</span></div></div>
                     <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Baltıc Dry (Navlun)</div><div class="text-xl font-bold">$${m.shipping} <span class="text-sm">${formatPct(m.shippingPct)}</span></div></div>
@@ -212,12 +214,19 @@
                     <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Gümüş (Ons)</div><div class="text-xl font-bold">$${m.silver} <span class="text-sm">${formatPct(m.silverPct)}</span></div></div>
                     <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">VIX (Korku)</div><div class="text-xl font-bold">${m.vix} <span class="text-sm">${formatPct(m.vixPct)}</span></div></div>
                     <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Sıvı Hidrokarbon (WTI)</div><div class="text-xl font-bold">$${m.wti}</div></div>
-                    
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Jet Yakıtı (Mnl)</div><div class="text-xl font-bold">$${man.jetFuel}</div></div>
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Polyester (Mnl)</div><div class="text-xl font-bold">$${man.polyester}</div></div>
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Gübre (Mnl)</div><div class="text-xl font-bold">$${man.gubre}</div></div>
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Türkiye 5Y CDS (Mnl)</div><div class="text-xl font-bold">${man.cds}</div></div>
                 `;
+
+                // 2. Ardından admin panelden girilen sınırsız manuel verileri diziyoruz
+                manualList.forEach(item => {
+                    metricsHtml += `
+                        <div class="metric-card">
+                            <div class="text-[10px] font-bold text-gray-500 uppercase">${item.name} <span class="bg-gray-100 text-gray-400 px-1 rounded ml-1 text-[8px]">MNL</span></div>
+                            <div class="text-xl font-bold text-blue-900">${item.value} <span class="text-xs text-gray-500 ml-1 font-semibold">${item.unit}</span></div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('metrics-container').innerHTML = metricsHtml;
 
                 // Botun Yeni Bulduğu Haberleri Haritaya Ekle
                 dynamicMarkers.forEach(m => map.removeLayer(m));
