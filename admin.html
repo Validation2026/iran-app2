@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TERMİNAL | ADMİN PANELİ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Outfit:wght@500;800;900&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f9f9fb; color: #2d3338; transition: all 0.3s; }
+        .font-headline { font-family: 'Outfit', sans-serif; }
+        .section-card { background: #ffffff; border-radius: 1.5rem; padding: 2rem; border: 1px solid #e2e8f0; margin-bottom: 2rem; shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .label-text { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #718096; margin-bottom: 0.6rem; display: block; }
+        input, textarea, select { background: #ffffff !important; border: 1px solid #cbd5e0 !important; color: #2d3338 !important; border-radius: 1rem !important; transition: all 0.2s; }
+        input:focus { border-color: #ba1e1e !important; box-shadow: 0 0 0 2px rgba(186, 30, 30, 0.1) !important; outline: none !important; }
+        .btn-ai { background: #ba1e1e; color: white; transition: all 0.3s; border-radius: 0.75rem; }
+        .btn-ai:hover { background: #961818; transform: translateY(-1px); }
+        .btn-save { background: #2d3338; color: #ffffff; transition: all 0.3s; border-radius: 0.75rem; }
+        .btn-save:hover { background: #1a1e21; transform: translateY(-1px); }
+        .instruction-banner { background: #fff5f5; border: 1px solid #feb2b2; color: #c53030; border-radius: 1rem; padding: 1rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem; }
+        .toast-active { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body class="p-4 md:p-12 overflow-x-hidden">
+    <div class="max-w-5xl mx-auto">
+
+        <!-- Instruction Banner -->
+        <div class="instruction-banner">
+            <span class="material-symbols-outlined text-[20px]">info</span>
+            <p class="text-[11px] font-bold tracking-tight">
+                <span class="uppercase">İŞLEM SIRASI:</span> 
+                1. Önce <span class="font-black text-[#ba1e1e]">AI ANALİZ</span> butonuna basın. 
+                2. Girdileri <span class="font-black text-[#ba1e1e]">MANUEL GÜNCELLEYİN</span>. 
+                3. Son olarak <span class="font-black text-[#ba1e1e]">KAYDET</span> butonu ile kaydedin.
+            </p>
+        </div>
+        
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 border-b border-[#e2e8f0] pb-8">
+            <div class="flex items-center gap-4">
+                <div class="bg-[#ba1e1e] p-3 rounded-2xl">
+                    <span class="material-symbols-outlined text-white text-[32px]">admin_panel_settings</span>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-black font-headline tracking-tighter uppercase leading-none text-[#1a202c]">STRATEJİK ADMİN</h1>
+                    <p class="text-[#718096] text-[10px] font-black tracking-[0.3em] uppercase mt-2">IRAN RISK MONITOR • KONTROL PANELİ</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-[9px] font-black text-[#718096] uppercase">SİSTEM DURUMU</p>
+                <p class="text-[11px] font-black text-green-600 uppercase flex items-center justify-end gap-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> AKTİF
+                </p>
+            </div>
+        </header>
+
+        <form id="dataForm" class="space-y-6">
+            <!-- Core -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="section-card">
+                    <label class="label-text">GENEL RİSK SKORU (0-100)</label>
+                    <input type="number" id="riskScore" min="0" max="100" class="w-full text-4xl font-black font-headline p-4 text-[#ba1e1e] shadow-sm" required />
+                </div>
+                <div class="section-card">
+                    <label class="label-text">BAŞLANGIÇ TARİHİ</label>
+                    <input type="date" id="startDate" class="w-full p-4 font-black text-sm text-[#1a202c] shadow-sm" required />
+                </div>
+            </div>
+
+            <!-- News Analysis -->
+            <div class="section-card shadow-sm">
+                <label class="label-text">DURUM ANALİZİ</label>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <select id="bulletinStatus" class="p-4 font-black text-xs uppercase shadow-sm">
+                        <option value="DÜŞÜK">DÜŞÜK</option><option value="ORTA">ORTA</option><option value="YÜKSEK">YÜKSEK</option><option value="KRİTİK">KRİTİK</option>
+                    </select>
+                    <textarea id="bulletinContent" class="md:col-span-3 p-4 text-xs h-32 shadow-sm leading-relaxed" placeholder="Analiz raporu..."></textarea>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="section-card border-l-4 border-l-[#ba1e1e] shadow-sm">
+                    <label class="label-text">JEOPOLİTİK RİSKLER</label>
+                    <select id="geoRiskStatus" class="w-full p-4 font-black text-xs uppercase mb-4 shadow-sm">
+                        <option value="DÜŞÜK">DÜŞÜK</option><option value="ORTA">ORTA</option><option value="YÜKSEK">YÜKSEK</option><option value="KRİTİK">KRİTİK</option>
+                    </select>
+                    <textarea id="geoRiskContent" class="w-full p-4 text-xs h-32 shadow-sm leading-relaxed"></textarea>
+                </div>
+                <div class="section-card border-l-4 border-l-green-600 shadow-sm">
+                    <label class="label-text">EKOPOLİTİK RİSKLER</label>
+                    <select id="marketRiskStatus" class="w-full p-4 font-black text-xs uppercase mb-4 shadow-sm">
+                        <option value="STABİL">STABİL</option><option value="RİSK OFF">RİSK OFF</option><option value="KRİTİK">KRİTİK</option>
+                    </select>
+                    <textarea id="marketRiskContent" class="w-full p-4 text-xs h-32 shadow-sm leading-relaxed"></textarea>
+                </div>
+            </div>
+
+            <!-- Editable Metrics Table -->
+            <div class="section-card shadow-sm">
+                <label class="label-text">RİSK METRİKLERİ (İSİM VE DEĞERLER)</label>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="text-[9px] font-black text-[#718096] border-b border-[#e2e8f0]">
+                            <tr>
+                                <th class="pb-4">METRİK ADI</th>
+                                <th class="pb-4 text-center">DEĞER</th>
+                                <th class="pb-4 text-center">AY_%</th>
+                                <th class="pb-4 text-center">YIL_%</th>
+                            </tr>
+                        </thead>
+                        <tbody id="metricsContainer" class="divide-y divide-[#e2e8f0]">
+                            <!-- Metrikler buraya dinamik dolacak -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sticky Actions -->
+            <div class="sticky bottom-6 z-40 bg-white/90 backdrop-blur-xl p-6 rounded-[2rem] border border-[#e2e8f0] shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex flex-col md:flex-row gap-4 items-center">
+                <div class="w-full md:w-1/4">
+                    <label class="label-text">GÜVENLİK (PIN)</label>
+                    <input type="password" id="apiPin" class="w-full p-4 text-center tracking-[0.8em] font-black text-sm border-[#e2e8f0]" required />
+                </div>
+                <div class="w-full flex gap-3">
+                    <button type="submit" class="btn-save flex-1 font-black uppercase tracking-widest py-4 rounded-xl shadow-lg">KAYDET</button>
+                    <button id="aiSyncBtn" type="button" class="btn-ai flex-1 font-black uppercase tracking-widest py-4 rounded-xl shadow-lg">AI ANALİZ</button>
+                    <button id="resetBtn" type="button" class="bg-gray-100 text-gray-600 hover:bg-gray-200 px-6 rounded-xl border border-gray-200 transition-colors" title="Temizle">
+                        <span class="material-symbols-outlined">delete</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div id="toast" class="fixed top-10 right-10 opacity-0 transition-all duration-500 z-[9999] p-5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl"></div>
+
+<script>
+    async function loadData() {
+        try {
+            const resp = await fetch('/api?_t=' + Date.now());
+            const data = await resp.json();
+            
+            document.getElementById('riskScore').value = data.riskScore || 0;
+            document.getElementById('startDate').value = data.startDate || "2026-02-28";
+            document.getElementById('bulletinStatus').value = data.bulletin?.status || "ORTA";
+            document.getElementById('bulletinContent').value = data.bulletin?.content || "";
+            document.getElementById('geoRiskStatus').value = data.geoRisk?.status || "ORTA";
+            document.getElementById('geoRiskContent').value = data.geoRisk?.content || "";
+            document.getElementById('marketRiskStatus').value = data.marketRisk?.status || "STABİL";
+            document.getElementById('marketRiskContent').value = data.marketRisk?.content || "";
+
+            const container = document.getElementById('metricsContainer');
+            container.innerHTML = "";
+            (data.metrics || []).forEach(m => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-2 pr-2"><input type="text" class="w-full p-2 text-[11px] font-bold metric-n" value="${m.name}" /></td>
+                    <td class="py-2 px-1"><input type="text" class="w-full p-2 text-[11px] font-black text-center metric-v" value="${m.value}" /></td>
+                    <td class="py-2 px-1"><input type="text" class="w-full p-2 text-[11px] font-black text-center metric-m" value="${m.month}" /></td>
+                    <td class="py-2 pl-2"><input type="text" class="w-full p-2 text-[11px] font-black text-center metric-y" value="${m.year}" /></td>
+                `;
+                container.appendChild(tr);
+            });
+        } catch (e) { showToast("VERİ ALINAMADI", "bg-red-800 text-white"); }
+    }
+
+    document.getElementById('dataForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const pin = document.getElementById('apiPin').value;
+        const payload = {
+            startDate: document.getElementById('startDate').value,
+            riskScore: parseInt(document.getElementById('riskScore').value),
+            lastUpdated: new Date().toLocaleString('tr-TR'),
+            bulletin: { status: document.getElementById('bulletinStatus').value, content: document.getElementById('bulletinContent').value },
+            geoRisk: { status: document.getElementById('geoRiskStatus').value, content: document.getElementById('geoRiskContent').value },
+            marketRisk: { status: document.getElementById('marketRiskStatus').value, content: document.getElementById('marketRiskContent').value },
+            metrics: Array.from(document.querySelectorAll('#metricsContainer tr')).map(tr => ({
+                name: tr.querySelector('.metric-n').value,
+                value: tr.querySelector('.metric-v').value,
+                month: tr.querySelector('.metric-m').value,
+                year: tr.querySelector('.metric-y').value
+            }))
+        };
+
+        try {
+            const resp = await fetch('/api', { 
+                method: "POST", 
+                headers: { "Content-Type": "application/json" }, 
+                body: JSON.stringify({ pin, data: payload }) 
+            });
+            if (!resp.ok) throw new Error("Hata");
+            showToast("KAYDEDİLDİ!", "bg-green-900 text-white");
+        } catch (e) { showToast("KAYIT HATASI", "bg-red-900 text-white"); }
+    };
+
+    document.getElementById('aiSyncBtn').onclick = async () => {
+        const pin = document.getElementById('apiPin').value;
+        if (!pin) { showToast("PIN GİRİLMELİ!", "bg-red-800 text-white"); return; }
+        showToast("AI ANALİZİ BEKLENİYOR...", "bg-red-800 text-white");
+        try {
+            const resp = await fetch('/api/sync-ai', { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pin }) });
+            const result = await resp.json();
+            if (result.success) {
+                const d = result.data;
+                if (d.bulletin) {
+                    document.getElementById('bulletinStatus').value = d.bulletin.status;
+                    document.getElementById('bulletinContent').value = d.bulletin.content;
+                }
+                if (d.geoRisk) {
+                    document.getElementById('geoRiskStatus').value = d.geoRisk.status;
+                    document.getElementById('geoRiskContent').value = d.geoRisk.content;
+                }
+                if (d.marketRisk) {
+                    document.getElementById('marketRiskStatus').value = d.marketRisk.status;
+                    document.getElementById('marketRiskContent').value = d.marketRisk.content;
+                }
+                showToast("ANALYİZ TAMAM!", "bg-blue-900 text-white");
+            }
+        } catch (e) { showToast("AI HATASI", "bg-red-900 text-white"); }
+    };
+
+    document.getElementById('resetBtn').onclick = () => {
+        document.querySelectorAll('textarea').forEach(t => t.value = "");
+    };
+
+    function showToast(msg, cls) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.className = `fixed top-10 right-10 px-6 py-4 rounded-2xl shadow-2xl text-[10px] uppercase font-black transition-all ${cls} toast-active`;
+        setTimeout(() => { t.classList.remove('toast-active'); }, 3000);
+    }
+    loadData();
+</script>
+</body>
+</html>

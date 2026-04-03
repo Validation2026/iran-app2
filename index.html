@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html class="light" lang="tr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>IRAN RISK MONITOR</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary-fixed": "#e5e2e1",
+                        "on-secondary-container": "#525252",
+                        "on-error": "#fff7f7",
+                        "tertiary-container": "#fd5046",
+                        "error-container": "#ff8b9a",
+                        "surface": "#f9f9fb",
+                        "primary-fixed-dim": "#d6d4d3",
+                        "secondary-fixed": "#e4e2e1",
+                        "inverse-on-surface": "#9c9d9f",
+                        "outline": "#757c81",
+                        "surface-container-highest": "#dde3e9",
+                        "secondary-container": "#e4e2e1",
+                        "on-primary-container": "#525151",
+                        "primary": "#5f5e5e",
+                        "on-secondary-fixed": "#3f3f3f",
+                        "on-tertiary": "#fff7f6",
+                        "on-tertiary-fixed": "#000000",
+                        "inverse-surface": "#0c0e10",
+                        "surface-container-low": "#f2f4f6",
+                        "on-surface": "#2d3338",
+                        "on-error-container": "#782232",
+                        "error": "#9e3f4e",
+                        "primary-dim": "#535252",
+                        "error-dim": "#4f0116",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#ffffff",
+                        "surface-tint": "#5f5e5e",
+                        "surface-container": "#ebeef2",
+                        "primary-container": "#e5e2e1",
+                        "on-secondary-fixed-variant": "#5c5b5b",
+                        "on-secondary": "#fbf8f8",
+                        "surface-container-high": "#e4e9ee",
+                        "on-background": "#2d3338",
+                        "tertiary-fixed-dim": "#eb433b",
+                        "background": "#f9f9fb",
+                        "tertiary-dim": "#a80d13",
+                        "secondary-dim": "#535353",
+                        "tertiary-fixed": "#fd5046",
+                        "surface-bright": "#f9f9fb",
+                        "on-primary-fixed": "#403f3f",
+                        "tertiary": "#ba1e1e",
+                        "surface-variant": "#dde3e9",
+                        "on-surface-variant": "#596065",
+                        "secondary": "#5f5f5f",
+                        "outline-variant": "#acb3b8",
+                        "on-tertiary-container": "#1f0000",
+                        "on-primary-fixed-variant": "#5c5b5b",
+                        "on-primary": "#faf7f6",
+                        "on-tertiary-fixed-variant": "#3b0002",
+                        "secondary-fixed-dim": "#d6d4d3",
+                        "surface-dim": "#d3dbe2"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        .gauge-track {
+            stroke: #e5e2e1;
+        }
+
+        .gauge-fill {
+            stroke: #ba1e1e;
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: calc(251.2 - (251.2 * 82) / 100);
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const startDate = new Date('2026-02-28');
+            const today = new Date();
+
+            // --- Data Management System ---
+            let dashboardData = {};
+
+            async function fetchLiveContent() {
+                try {
+                    const response = await fetch(`/api?_t=${Date.now()}`);
+                    if (!response.ok) throw new Error("API hatası");
+
+                    dashboardData = await response.json();
+                    refreshUI();
+                } catch (error) {
+                    console.error("Senkronizasyon hatası:", error);
+                    try {
+                        const r = await fetch(`data.json?_t=${Date.now()}`);
+                        dashboardData = await r.json();
+                        refreshUI();
+                    } catch (e) { }
+                }
+            }
+
+            function refreshUI() {
+                const now = new Date();
+                const todayStr = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' });
+
+                const startDay = new Date(dashboardData.startDate || "2026-02-28");
+                const diffTime = Math.abs(now - startDay);
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                const dateTextEl = document.querySelector('.current-date-text');
+                if (dateTextEl) dateTextEl.textContent = todayStr;
+
+                const dayCountEl = document.querySelector('.day-count-text');
+                if (dayCountEl) dayCountEl.textContent = diffDays;
+
+                // Risk Gauge
+                const riskScore = dashboardData.riskScore || 0;
+                const scoreRotator = document.querySelector('#score-rotator');
+                const scoreCounter = document.querySelector('#score-counter');
+                const scoreDisplay = document.querySelector('.gauge-score');
+
+                if (scoreRotator && scoreCounter && scoreDisplay) {
+                    const angle = (riskScore / 100) * 180 - 90;
+                    scoreRotator.style.transform = `rotate(${angle}deg)`;
+                    scoreCounter.style.transform = `translateX(-50%) rotate(${-angle}deg)`;
+                    scoreDisplay.style.color = riskScore > 50 ? '#ba1e1e' : '#16a34a';
+                    scoreDisplay.textContent = riskScore;
+                }
+
+                // Metrics Table
+                updateTable('unified-metrics-body', dashboardData.metrics);
+
+                // Bulletin
+                const bulletinTitle = document.querySelector('.bulletin-title-text');
+                const bulletinContent = document.querySelector('.bulletin-content-text');
+                const bulletinBadge = document.querySelector('#bulletin-badge');
+
+                if (dashboardData.bulletin) {
+                    if (bulletinTitle) bulletinTitle.textContent = "DURUM ANALİZİ";
+                    if (bulletinContent) bulletinContent.textContent = dashboardData.bulletin.content || "";
+                    if (bulletinBadge) {
+                        const bStat = (dashboardData.bulletin.status || "").toUpperCase();
+                        bulletinBadge.textContent = bStat || "ANALİZ";
+                        bulletinBadge.style.color = bStat.includes("DÜŞÜK") || bStat.includes("STABİL") ? "#16a34a" : "#ba1e1e";
+                    }
+                }
+
+                // Cards
+                const gDesc = document.querySelector('#geo-risk-desc');
+                const gBadge = document.querySelector('#geo-badge');
+                if (dashboardData.geoRisk) {
+                    if (gDesc) gDesc.textContent = dashboardData.geoRisk.content;
+                    if (gBadge) {
+                        const gStat = (dashboardData.geoRisk.status || "---").toUpperCase();
+                        gBadge.textContent = gStat;
+                        gBadge.style.color = gStat.includes("DÜŞÜK") || gStat.includes("STABİL") ? "#16a34a" : "#ba1e1e";
+                    }
+                }
+
+                const mDesc = document.querySelector('#market-risk-desc');
+                const mBadge = document.querySelector('#market-badge');
+                if (dashboardData.marketRisk) {
+                    if (mDesc) mDesc.textContent = dashboardData.marketRisk.content;
+                    if (mBadge) {
+                        const mStat = (dashboardData.marketRisk.status || "---").toUpperCase();
+                        mBadge.textContent = mStat;
+                        mBadge.style.color = mStat.includes("STABİL") || mStat.includes("DÜŞÜK") ? "#16a34a" : "#ba1e1e";
+                    }
+                }
+
+                // Status Bar & Footer Update
+                const updateStr = dashboardData.lastUpdated || now.toLocaleString('tr-TR');
+                const footerUpdateText = document.getElementById('footer-update-text');
+                if (footerUpdateText) footerUpdateText.textContent = `SON GÜNCELLEME: ${updateStr}`;
+            }
+
+            function updateTable(id, data) {
+                const body = document.getElementById(id);
+                if (!body || !data) return;
+
+                body.innerHTML = '';
+                data.forEach(row => {
+                    if (!row.name) return;
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-surface-container-high transition-colors group';
+
+                    const colorMonth = row.month && row.month.includes('-') ? 'text-[#ba1e1e]' : 'text-green-700';
+                    const colorYear = row.year && row.year.includes('-') ? 'text-[#ba1e1e]' : 'text-green-700';
+
+                    const formatVal = (v) => {
+                        if (!v) return "";
+                        const num = parseFloat(v.toString().replace(/\./g, "").replace(",", "."));
+                        if (isNaN(num)) return v;
+                        return new Intl.NumberFormat('tr-TR').format(num);
+                    };
+
+                    tr.innerHTML = `
+                        <td class="pl-5 pr-2 py-2 align-middle w-[55%]">
+                            <div class="text-[11px] font-semibold text-on-surface line-clamp-1 leading-tight uppercase">${row.name}</div>
+                        </td>
+                        <td class="px-2 py-2 text-[12px] font-black text-on-surface align-middle w-[15%]">${formatVal(row.value)}</td>
+                        <td class="px-2 py-2 text-center align-middle w-[15%]">
+                            <div class="text-[11px] font-black ${colorMonth}">${row.month || ''}</div>
+                        </td>
+                        <td class="pl-2 pr-5 py-2 text-center align-middle w-[15%]">
+                            <div class="text-[11px] font-black ${colorYear}">${row.year || ''}</div>
+                        </td>
+                    `;
+                    body.appendChild(tr);
+                });
+            }
+
+            fetchLiveContent();
+            setInterval(fetchLiveContent, 300000);
+        });
+    </script>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body class="bg-surface font-body text-on-surface antialiased no-scrollbar">
+    <header
+        class="bg-[#ffffff]/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm sticky top-0 z-50 flex justify-between items-center w-full px-6 py-4 max-w-full">
+        <div class="flex items-center gap-3">
+            <svg class="text-[#ba1e1e] fill-current" xmlns="http://www.w3.org/2000/svg" height="28px"
+                viewBox="0 -960 960 960" width="28px">
+                <path
+                    d="M361-80q-14 0-24.5-7.5T322-108L220-440H80v-80h170q13 0 23.5 7.5T288-492l66 215 127-571q3-14 14-23t25-9q14 0 25 8.5t14 22.5l87 376 56-179q4-13 14.5-20.5T740-680q13 0 23 7t15 19l50 134h52v80h-80q-13 0-23-7t-15-19l-19-51-65 209q-4 13-15 21t-25 7q-14-1-24-9.5T601-311l-81-348-121 548q-3 14-13.5 22T361-80Z" />
+            </svg>
+            <h1 class="text-xl font-bold tracking-tight text-[#2d3338] dark:text-slate-100 font-headline">IRAN RISK
+                MONITOR</h1>
+        </div>
+        <div
+            class="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest font-inter text-[#2d3338] dark:text-slate-100">
+            <span class="lowercase">canlı</span>
+            <svg class="fill-current text-[#ba1e1e]" xmlns="http://www.w3.org/2000/svg" height="20px"
+                viewBox="0 -960 960 960" width="20px">
+                <path
+                    d="m298-309-70-71q51-48 116-74t136-26q71 0 136 26t116 74l-70 71q-38-35-84.5-53T480-380q-51 0-97.5 18T298-309ZM73-536 2-607q97-94 220.5-143.5T480-800q134 0 257.5 49.5T958-607l-71 71q-82-79-187-121.5T480-700q-115 0-220 42.5T73-536Zm113 114-70-71q74-71 168-109t197-38q103 0 196.5 37.5T845-494l-70 71q-60-57-136.5-87T480-540q-83 0-158.5 30.5T186-422Zm237.5 238.5Q400-207 400-240t23.5-56.5Q447-320 480-320t56.5 23.5Q560-273 560-240t-23.5 56.5Q513-160 480-160t-56.5-23.5Z" />
+            </svg>
+        </div>
+    </header>
+    <div class="min-h-screen">
+        <main class="w-full max-w-[480px] mx-auto px-4 pt-6 pb-4">
+            <section class="mb-5">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-5">
+                    <div class="w-full">
+                        <p class="text-label text-on-surface-variant font-medium mb-1 current-date-text">31 Mart 2026,
+                            Salı</p>
+                        <h2
+                            class="text-3xl md:text-5xl font-extrabold font-headline tracking-tighter text-on-surface border-b border-[#ba1e1e]/30 w-full pb-2">
+                            <span class="uppercase">İRAN-BÖLGESEL SAVAŞ</span><br>
+                            <span class="inline-flex items-baseline gap-[4px] mt-1">
+                                <span class="text-[#ba1e1e] text-[42px] leading-none"><span
+                                        class="day-count-text"></span>.</span>
+                                <span class="text-[#2d3338] dark:text-slate-100">Gün</span>
+                            </span>
+                        </h2>
+                    </div>
+                    <div
+                        class="flex flex-col px-5 py-3 bg-surface-container-lowest rounded-2xl shadow-sm w-full border-l-[6px] border-[#ba1e1e]">
+                        <h3 class="font-headline font-bold text-[14px] uppercase text-on-surface mt-1">GENEL RİSK SKORU
+                        </h3>
+                        <div class="flex flex-row items-end justify-center w-full mt-2 mb-10">
+                            <div class="relative w-full max-w-[220px] flex-shrink-0 mx-auto">
+                                <svg class="w-full h-auto overflow-visible" viewBox="0 0 200 100">
+                                    <defs>
+                                        <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#16a34a" />
+                                            <stop offset="35%" stop-color="#e2e8f0" />
+                                            <stop offset="65%" stop-color="#e2e8f0" />
+                                            <stop offset="100%" stop-color="#ba1e1e" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M 40 95 A 60 60 0 0 1 160 95" fill="none" stroke="url(#gaugeGradient)"
+                                        stroke-width="24" stroke-linecap="butt" />
+                                </svg>
+                                <div class="absolute left-[15px] top-[102%] flex flex-col items-center">
+                                    <span class="text-[9px] font-bold text-[#16a34a] tracking-tighter">Risk ON</span>
+                                    <span class="text-xs font-extrabold text-[#16a34a] leading-none">0</span>
+                                </div>
+                                <div class="absolute right-[15px] top-[102%] flex flex-col items-center">
+                                    <span class="text-[9px] font-bold text-[#ba1e1e] tracking-tighter">Risk OFF</span>
+                                    <span class="text-xs font-extrabold text-[#ba1e1e] leading-none">100</span>
+                                </div>
+                                <div class="absolute left-0 right-0 bottom-0 top-0 pointer-events-none"
+                                    id="score-rotator"
+                                    style="transform-origin: 50% 95%; transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                                    <div class="absolute left-1/2 top-[-42%]" id="score-counter"
+                                        style="transform: translateX(-50%); transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                                        <span
+                                            class="text-[36px] font-black font-headline leading-none gauge-score tracking-tighter block px-2 py-0.5">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="mb-5 flex flex-col gap-5 items-stretch">
+                <div
+                    class="bg-surface-container-lowest px-5 py-5 rounded-2xl shadow-sm w-full border-l-[6px] border-[#ba1e1e] flex flex-col gap-3">
+                    <div class="flex justify-between items-start">
+                        <span class="material-symbols-outlined text-[#1f1f1f] text-2xl">description</span>
+                        <span id="bulletin-badge"
+                            class="text-[13px] font-black text-[#ba1e1e] uppercase tracking-wider">ANALİZ</span>
+                    </div>
+                    <h3 class="font-headline font-bold text-[14px] uppercase text-on-surface bulletin-title-text">DURUM
+                    </h3>
+                    <p class="text-[13px] text-justify text-on-surface-variant leading-relaxed bulletin-content-text">
+                        Yükleniyor...</p>
+                </div>
+                <div class="w-full flex flex-col gap-5">
+                    <div
+                        class="bg-surface-container-lowest px-5 py-5 rounded-2xl flex-1 flex flex-col gap-3 border-l-[6px] border-[#ba1e1e] shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <span class="material-symbols-outlined text-[#1f1f1f] text-2xl">warning</span>
+                            <span id="geo-badge"
+                                class="text-[13px] font-black text-[#ba1e1e] uppercase tracking-wider">---</span>
+                        </div>
+                        <h3 class="font-headline font-bold text-[14px] text-on-surface">JeoPolitik Riskler</h3>
+                        <p id="geo-risk-desc" class="text-[13px] text-on-surface-variant leading-relaxed text-justify">
+                            Yükleniyor...</p>
+                    </div>
+                    <div
+                        class="bg-surface-container-lowest px-5 py-5 rounded-2xl flex-1 flex flex-col gap-3 border-l-[6px] border-[#ba1e1e] shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <span class="material-symbols-outlined text-[#1f1f1f] text-2xl">speed</span>
+                            <span id="market-badge"
+                                class="text-[13px] font-black text-[#ba1e1e] uppercase tracking-wider">---</span>
+                        </div>
+                        <h3 class="font-headline font-bold text-[14px] text-on-surface">EkoPolitik Riskler</h3>
+                        <p id="market-risk-desc"
+                            class="text-[13px] text-on-surface-variant leading-relaxed text-justify">Yükleniyor...</p>
+                    </div>
+                </div>
+            </section>
+            <section
+                class="bg-surface-container-lowest rounded-2xl shadow-sm border-l-[6px] border-[#545f66] overflow-hidden"
+                id="risk-metrics">
+                <div class="px-5 py-4 flex items-center gap-3 border-b border-surface-container">
+                    <span class="material-symbols-outlined text-[#1f1f1f] text-2xl">data_exploration</span>
+                    <h2 class="font-headline font-bold text-[14px] uppercase tracking-wider text-on-surface">SEÇİLMİŞ
+                        RİSK METRİKLERİ</h2>
+                </div>
+                <div class="w-full">
+                    <table class="w-full text-left border-collapse table-fixed">
+                        <thead>
+                            <tr
+                                class="bg-surface-container-low/30 text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">
+                                <th class="pl-5 pr-2 py-2 w-[55%] text-left">GÖSTERGE</th>
+                                <th class="px-2 py-2 w-[15%] text-left">GÜNCEL</th>
+                                <th class="px-2 py-2 w-[15%] text-center">AYLIK_%</th>
+                                <th class="pl-2 pr-5 py-2 w-[15%] text-center">2026_%</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-surface-container" id="unified-metrics-body">
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-xs text-on-surface-variant font-medium">
+                                    Veriler yükleniyor...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section
+                class="mt-5 bg-surface-container-lowest rounded-2xl shadow-sm border-l-[6px] border-[#545f66] overflow-hidden">
+
+                <div class="p-4 w-full">
+                    <img src="graph.png" alt="Dünya Jeopolitik Belirsizlik Endeksi"
+                        class="w-full h-auto rounded-lg shadow-sm border border-surface-container">
+                </div>
+            </section>
+
+
+            <footer class="mt-6 mb-4 flex justify-between w-full px-1 border-t border-surface-container pt-2">
+                <div id="footer-update-text"
+                    class="text-[11px] font-extrabold text-on-surface-variant/70 tracking-widest uppercase font-inter">
+                    SON GÜNCELLEME: --:-- </div>
+                <div class="text-[11px] font-extrabold text-on-surface-variant/70 tracking-widest uppercase font-inter">
+                    risk@2026 </div>
+            </footer>
+        </main>
+    </div>
+</body>
+
+</html>
