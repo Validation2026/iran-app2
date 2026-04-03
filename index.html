@@ -10,251 +10,103 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        body { font-family: 'Rajdhani', sans-serif; background-color: #f4f6f8; color: #1a1c1e; }
-        @keyframes pulse_red {0% {transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.6);} 50% {transform: scale(1.2); box-shadow: 0 0 0 6px rgba(255, 0, 0, 0);} 100% {transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);}}
-        @keyframes pulse_orange {0% {transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.6);} 50% {transform: scale(1.2); box-shadow: 0 0 0 6px rgba(255, 165, 0, 0);} 100% {transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 165, 0, 0);}}
-        @keyframes pulse_cyan {0% {transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.6);} 50% {transform: scale(1.2); box-shadow: 0 0 0 6px rgba(0, 255, 255, 0);} 100% {transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 255, 255, 0);}}
-
-        .strike-ir {width: 14px; height: 14px; background-color: #ff0000; border-radius: 50%; border: 1.5px solid white; animation: pulse_red 2.5s infinite;}
-        .strike-il {width: 14px; height: 14px; background-color: #ff9900; border-radius: 50%; border: 1.5px solid white; animation: pulse_orange 2.5s infinite;}
-        .strike-us {width: 14px; height: 14px; background-color: #00ffff; border-radius: 50%; border: 1.5px solid white; animation: pulse_cyan 2.5s infinite;}
-        
-        .metric-card { background: white; border-left: 4px solid #9ca3af; border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.3s; }
-        .metric-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(220, 38, 38, 0.2); border-left-color: #dc2626; }
-        @keyframes breath { 0% { transform: scale(0.995); box-shadow: 0 4px 6px rgba(0,0,0,0.05); } 100% { transform: scale(1.005); box-shadow: 0 10px 15px currentColor; } }
-        .hurmuz-box { animation: breath 2.5s infinite alternate ease-in-out; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { font-family: 'Rajdhani', sans-serif; background-color: #f4f6f8; }
+        .strike-ir {width: 14px; height: 14px; background-color: #ff0000; border-radius: 50%; border: 1.5px solid white; animation: pulse 2.5s infinite;}
+        @keyframes pulse {0% {transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.6);} 70% {transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);} 100% {transform: scale(0.9);}}
+        .metric-card { background: white; border-left: 4px solid #9ca3af; padding: 1rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: 0.3s; }
+        .metric-card:hover { transform: translateY(-3px); border-left-color: #dc2626; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body class="p-4 md:p-8 max-w-7xl mx-auto">
 
-    <header class="flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-        <div class="mb-4 md:mb-0 text-center md:text-left">
-            <h1 id="main-title" class="text-3xl md:text-4xl font-extrabold tracking-tight text-red-700">⚔️ İRAN BÖLGESEL SAVAŞI</h1>
-            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2" id="last-update">Veriler Yükleniyor...</p>
+    <header class="flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-6 rounded-2xl shadow-sm">
+        <div class="text-center md:text-left">
+            <h1 id="main-title" class="text-3xl md:text-4xl font-extrabold text-red-700 uppercase tracking-tighter">⚔️ İRAN BÖLGESEL SAVAŞI</h1>
+            <p id="last-update" class="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">Yükleniyor...</p>
         </div>
-        
-        <div class="flex flex-col items-center justify-center">
-            <h2 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">SİSTEM RİSK SKORU</h2>
-            <div class="relative w-40 h-20 overflow-hidden">
+        <div class="flex flex-col items-center">
+            <span class="text-[10px] font-black text-gray-500 uppercase mb-1">Risk Skoru</span>
+            <div class="relative w-32 h-16">
                 <svg viewBox="0 0 100 50" class="w-full h-full">
-                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#f3f4f6" stroke-width="12" stroke-linecap="round"></path>
-                    <path id="gauge-fill" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#dc2626" stroke-width="12" stroke-linecap="round" stroke-dasharray="125.6" stroke-dashoffset="125.6" style="transition: stroke-dashoffset 1s ease-out;"></path>
+                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#eee" stroke-width="10" stroke-linecap="round"></path>
+                    <path id="gauge-fill" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#dc2626" stroke-width="10" stroke-linecap="round" stroke-dasharray="125.6" stroke-dashoffset="125.6" style="transition: 1s;"></path>
                 </svg>
-                <div class="absolute bottom-0 left-0 w-full text-center">
-                    <span id="risk-score-text" class="text-3xl font-black text-gray-800">0</span>
-                </div>
+                <div id="risk-score-text" class="absolute bottom-0 w-full text-center text-2xl font-black">0</div>
             </div>
         </div>
     </header>
 
-    <div class="bg-white rounded-xl shadow-sm border-l-4 border-l-gray-600 p-4 mb-4 flex items-center gap-4">
-        <div>
-            <h3 class="text-[11px] font-black tracking-widest text-gray-500 uppercase mb-1">RİSK ANALİZİ VE SENTEZ</h3>
-            <p id="ai-text" class="text-sm font-semibold text-gray-800 leading-tight">Sistem başlatılıyor...</p>
+    <div class="bg-white p-4 rounded-xl border-l-4 border-gray-800 mb-6 font-bold text-sm" id="ai-text">Analiz sentezleniyor...</div>
+    <div id="hurmuz-container" class="p-4 rounded-xl text-center font-black text-xl text-white mb-6 uppercase tracking-widest shadow-xl">🚀 HÜRMÜZ BOĞAZI: <span id="hurmuz-text">YÜKLENİYOR...</span></div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8" id="metrics-container"></div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div class="p-4 border-b font-bold text-xs uppercase tracking-widest bg-gray-50">🗺️ Stratejik Operasyon Haritası</div>
+            <div id="map" class="h-[550px] z-10"></div>
         </div>
-    </div>
-
-    <div id="hurmuz-container" class="hurmuz-box p-4 rounded-xl text-center font-bold text-xl tracking-widest uppercase text-white shadow-md mb-6 bg-blue-600">
-        🚀 HÜRMÜZ BOĞAZI DURUMU: <span id="hurmuz-text">YÜKLENİYOR...</span>
-    </div>
-
-    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6" id="metrics-container"></div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-            <div class="px-5 py-3 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                <h2 class="font-bold text-sm uppercase tracking-wider text-gray-800">🗺️ STRATEJİK ÇATIŞMA HARİTASI</h2>
-                <div class="flex gap-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#ff0000]"></div> İran</span>
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#ff9900]"></div> İsrail</span>
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#00ffff]"></div> ABD</span>
-                </div>
-            </div>
-            <div id="map" class="w-full h-[550px] z-10"></div>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[600px]">
-            <div class="px-5 py-3 border-b border-gray-100 bg-gray-50"><h2 class="font-bold text-sm uppercase tracking-wider text-gray-800">📰 CANLI HABER AKIŞI</h2></div>
-            <div id="news-feed" class="overflow-y-auto p-4 space-y-4 no-scrollbar"></div>
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col h-[600px]">
+            <div class="p-4 border-b font-bold text-xs uppercase tracking-widest bg-gray-50">📰 Canlı İstihbarat Akışı</div>
+            <div id="news-feed" class="overflow-y-auto p-4 space-y-3"></div>
         </div>
     </div>
 
     <script>
-        // --- GÜN HESAPLAYICI ---
-        const baslangicTarihi = new Date('2026-02-28T00:00:00');
+        const baslangic = new Date('2026-02-28');
         const bugun = new Date();
-        const farkMilisaniye = Math.abs(bugun - baslangicTarihi);
-        const gecenGun = Math.ceil(farkMilisaniye / (1000 * 60 * 60 * 24));
-        document.getElementById('main-title').innerText = `⚔️ İRAN BÖLGESEL SAVAŞI ${gecenGun}. GÜN`;
+        const gun = Math.ceil(Math.abs(bugun - baslangic) / (1000 * 60 * 60 * 24));
+        document.getElementById('main-title').innerText = `⚔️ İRAN BÖLGESEL SAVAŞI ${gun}. GÜN`;
 
-        // --- HARİTA BAŞLAT VE İRAN SINIRLARINI ÇİZ (GEOJSON) ---
         const map = L.map('map').setView([32.0, 48.0], 5);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
 
         fetch("https://raw.githubusercontent.com/johan/world.geo.json/master/countries/IRN.geo.json")
-            .then(res => res.json())
-            .then(data => {
-                L.geoJSON(data, { style: { fillColor: '#ef4444', color: '#ef4444', weight: 2, fillOpacity: 0.05, dashArray: '5, 5' } }).addTo(map);
-            }).catch(e => console.log("Sınır verisi çekilemedi."));
-
-        // --- DEVESA ASKERİ ÜSLER LİSTESİ ---
-        const askeri_usler = [
-            {"isim": "5. Filo (ABD - Bahreyn)", "lat": 26.20, "lon": 50.60},
-            {"isim": "Al Udeid Üssü (ABD - Katar)", "lat": 25.11, "lon": 51.31},
-            {"isim": "Camp Arifjan (ABD - Kuveyt)", "lat": 28.87, "lon": 48.16},
-            {"isim": "İncirlik Üssü (ABD/TR)", "lat": 37.00, "lon": 35.42},
-            {"isim": "Prens Sultan Üssü (ABD - S.Arabistan)", "lat": 24.06, "lon": 47.56},
-            {"isim": "Muwaffaq Salti Üssü (ABD - Ürdün)", "lat": 31.83, "lon": 36.78},
-            {"isim": "Al Asad Üssü (ABD - Irak)", "lat": 33.79, "lon": 42.43},
-            {"isim": "Nevatim Üssü (İsrail)", "lat": 31.20, "lon": 35.01},
-            {"isim": "Hatzerim Üssü (İsrail)", "lat": 31.23, "lon": 34.66},
-            {"isim": "Ramon Üssü (İsrail)", "lat": 30.77, "lon": 34.67},
-            {"isim": "Tel Nof Üssü (İsrail)", "lat": 31.83, "lon": 34.82},
-            {"isim": "Hayfa Deniz Üssü (İsrail)", "lat": 32.82, "lon": 34.98},
-            {"isim": "İsfahan 8. Taktik Üssü (İran)", "lat": 32.74, "lon": 51.86},
-            {"isim": "Bender Abbas Deniz Üssü (İran)", "lat": 27.15, "lon": 56.19},
-            {"isim": "Hamedan Nojeh Üssü (İran)", "lat": 35.20, "lon": 48.65},
-            {"isim": "Çabahar Deniz Üssü (İran)", "lat": 25.28, "lon": 60.62}
-        ];
-
-        // --- DEVASA GEÇMİŞ ÇATIŞMALAR LİSTESİ ---
-        const sabit_olaylar = [
-            {"isim": "Parchin Askeri Kompleksi", "lat": 35.53, "lon": 51.77, "actor": "il", "desc": "Tahran Yakını Füze Üretim Tesisi Vuruldu"},
-            {"isim": "İsfahan Radar Sistemi", "lat": 32.65, "lon": 51.66, "actor": "il", "desc": "S-300 Bataryaları İmha Edildi"},
-            {"isim": "Natanz Nükleer Tesisi", "lat": 33.97, "lon": 51.92, "actor": "il", "desc": "Hava Savunma Hatlarına Önleyici Vuruş"},
-            {"isim": "Tebriz Füze Siloları", "lat": 38.07, "lon": 46.29, "actor": "il", "desc": "Yeraltı Silolarına F-35 Operasyonu"},
-            {"isim": "Semnan Uzay ve Füze Merkezi", "lat": 35.58, "lon": 53.39, "actor": "il", "desc": "Balistik Füze Fırlatma Rampaları Vuruldu"},
-            {"isim": "Meşhed Hava Üssü Çevresi", "lat": 36.26, "lon": 59.61, "actor": "il", "desc": "Erken Uyarı Radarları Etkisiz Hale Getirildi"},
-            {"isim": "Ahvaz Petrol Altyapısı", "lat": 31.31, "lon": 48.67, "actor": "il", "desc": "Güneydeki Kritik Rafinerilerde Hasar Bildirildi"},
-            {"isim": "Harg Adası (Kharg)", "lat": 29.23, "lon": 50.32, "actor": "il", "desc": "İran'ın Ana Petrol İhraç Limanı Hedef Alındı"},
-            {"isim": "Fordow Nükleer Tesisi", "lat": 34.88, "lon": 50.99, "actor": "il", "desc": "Yeraltı Uranyum Zenginleştirme Tesisine Vuruş"},
-            {"isim": "Arak Ağır Su Reaktörü", "lat": 34.37, "lon": 49.24, "actor": "il", "desc": "Plütonyum Üretim Tesisi Çevresinde Patlamalar"},
-            {"isim": "Bandar-e Mahshahr", "lat": 30.55, "lon": 49.19, "actor": "il", "desc": "Petrokimya Tesislerinde Yangın"},
-            {"isim": "Zahedan Karargahı", "lat": 29.49, "lon": 60.86, "actor": "il", "desc": "Doğu Sınırındaki Lojistik Karargah Vuruldu"},
-            {"isim": "Keşm Adası (Qeshm)", "lat": 26.68, "lon": 55.82, "actor": "il", "desc": "Deniz Kuvvetleri İHA Üssü İmha Edildi"},
-            {"isim": "Beyrut Dahiye Merkez", "lat": 33.85, "lon": 35.51, "actor": "il", "desc": "Hizbullah Üst Düzey Komuta Merkezi Vuruldu"},
-            {"isim": "Şam İran Büyükelçiliği", "lat": 33.51, "lon": 36.27, "actor": "il", "desc": "Kudüs Gücü Komutanları Hedef Alındı"},
-            {"isim": "Halep Havalimanı", "lat": 36.18, "lon": 37.22, "actor": "il", "desc": "Silah Sevkiyatı Engellendi"},
-            {"isim": "Lazkiye Limanı", "lat": 35.52, "lon": 35.79, "actor": "il", "desc": "Konteyner Terminalinde Patlamalar"},
-            {"isim": "Humus T4 Hava Üssü", "lat": 34.52, "lon": 37.62, "actor": "il", "desc": "İran İHA Filosu Vuruldu"},
-            {"isim": "Bekaa Vadisi", "lat": 33.99, "lon": 36.14, "actor": "il", "desc": "Hizbullah Cephanelikleri İmha Edildi"},
-            {"isim": "Hudeyde Limanı", "lat": 14.79, "lon": 42.95, "actor": "il", "desc": "Husi Petrol Depoları İsrail F-15'lerince Vuruldu"},
-            {"isim": "Nevatim Hava Üssü", "lat": 31.20, "lon": 35.01, "actor": "ir", "desc": "Balistik Füze Yağmuru - Pistlerde Hasar"},
-            {"isim": "Meron Hava Kontrol", "lat": 32.99, "lon": 35.41, "actor": "ir", "desc": "Hizbullah Anti-Tank Füzeleriyle Radar Vurdu"},
-            {"isim": "Tel Aviv Banliyöleri", "lat": 32.11, "lon": 34.80, "actor": "ir", "desc": "Demir Kubbe'yi aşan füzeler sivil binalara isabet etti"},
-            {"isim": "Glilot Üssü", "lat": 32.14, "lon": 34.80, "actor": "ir", "desc": "İstihbarat Karargahına İHA Saldırısı"},
-            {"isim": "Aşkelon Enerji Tesisi", "lat": 31.63, "lon": 34.52, "actor": "ir", "desc": "Gazze'den ve Lübnan'dan Roket Atışları"},
-            {"isim": "Karish Doğal Gaz Sahası", "lat": 33.38, "lon": 34.03, "actor": "ir", "desc": "Açık Deniz Platformuna Hizbullah İHA'ları"},
-            {"isim": "Erbil Konsolosluğu", "lat": 36.23, "lon": 44.01, "actor": "ir", "desc": "Mossad Karargahı İddiasıyla Balistik Atış"},
-            {"isim": "Kızıldeniz Ticari Gemi", "lat": 13.33, "lon": 43.01, "actor": "ir", "desc": "Husiler Tarafından Kamikaze İHA Saldırısı"},
-            {"isim": "Bab'ül Mendep", "lat": 12.58, "lon": 43.33, "actor": "ir", "desc": "Tanker Geçişine Anti-Gemi Füzesi"},
-            {"isim": "Umman Körfezi", "lat": 25.00, "lon": 58.00, "actor": "ir", "desc": "Petrol Tankerine El Konulması / Sabotaj"},
-            {"isim": "Sanaa Yeraltı Depoları", "lat": 15.36, "lon": 44.19, "actor": "us", "desc": "B-2 Spirit Bombardıman Uçakları Vurdu"},
-            {"isim": "Saada (Yemen)", "lat": 16.94, "lon": 43.76, "actor": "us", "desc": "Husi Füze Fırlatma Rampaları İmha Edildi"},
-            {"isim": "Bağdat Yeşil Bölge", "lat": 33.31, "lon": 44.40, "actor": "us", "desc": "Milis Liderlerine Yönelik ABD SİHA Operasyonu"},
-            {"isim": "Jurf el-Sakhar", "lat": 32.88, "lon": 44.18, "actor": "us", "desc": "Ketaib Hizbullah Tesislerine Hava Harekatı"},
-            {"isim": "Deyrizor (Suriye)", "lat": 35.33, "lon": 40.14, "actor": "us", "desc": "İran Destekli Milis Kamplarına Misilleme"},
-            {"isim": "El-Meyadin (Suriye)", "lat": 35.01, "lon": 40.45, "actor": "us", "desc": "Sınır Ötesi Silah Depoları Vuruldu"},
-            {"isim": "Ebu Kemal (Suriye)", "lat": 34.45, "lon": 40.92, "actor": "us", "desc": "Lojistik Geçiş Noktasına ABD Saldırısı"}
-        ];
-
-        // Yıldız İkonu (Üsler için)
-        const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#d1d5db" stroke="#4b5563" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
-        
-        askeri_usler.forEach(us => { 
-            L.marker([us.lat, us.lon], {icon: L.divIcon({ html: starSvg, className: '', iconSize: [20,20] })})
-             .addTo(map).bindPopup(`<b style='color:black; font-family:"Rajdhani", sans-serif;'>🛡️ ${us.isim}</b>`); 
-        });
+            .then(res => res.json()).then(data => L.geoJSON(data, {style: {color: '#ef4444', weight: 1, fillOpacity: 0.03}}).addTo(map));
 
         let dynamicMarkers = [];
-        
-        function addStrikeMarker(olay, isDynamic = false) {
-            const cls = olay.actor === "ir" ? "strike-ir" : olay.actor === "il" ? "strike-il" : "strike-us";
-            const border = olay.actor === "ir" ? "#ff0000" : olay.actor === "il" ? "#ff9900" : "#00ffff";
-            const title = olay.isim || olay.city || "SALDIRI";
-            const desc = olay.desc || olay.title || "";
-            const link = olay.link || "#";
-
-            const popupHtml = `
-                <div style='color:white; background:#111; padding:12px; border-radius:6px; border:1px solid ${border}; width:200px; font-family:"Rajdhani", sans-serif;'>
-                    <b style='color:${border}; font-size:14px; text-transform:uppercase;'>📍 ${title}</b><br>
-                    <hr style='margin:6px 0; border-color:#333;'>
-                    ${desc ? `<span style='font-size:12px; color:#ddd;'>${desc}</span><br>` : ""}
-                    ${link !== "#" ? `<a href='${link}' target='_blank' style='display:inline-block; margin-top:10px; color:#111; background-color:${border}; text-decoration:none; font-size:11px; padding:4px 8px; border-radius:4px; font-weight:bold;'>🔗 HABERE GİT</a>` : ""}
-                </div>
-            `;
-            const marker = L.marker([olay.lat, olay.lon], {icon: L.divIcon({ html: `<div class="${cls}"></div>`, className: '' })}).addTo(map).bindPopup(popupHtml);
-            if (isDynamic) dynamicMarkers.push(marker);
+        function addMarker(olay, isDynamic = false) {
+            const marker = L.marker([olay.lat, olay.lon], {icon: L.divIcon({html: `<div class="strike-ir"></div>`, className: ''})}).addTo(map).bindPopup(`<b>${olay.city}</b><br>${olay.title || ""}`);
+            if(isDynamic) dynamicMarkers.push(marker);
         }
 
-        // Sabit Olayları (Dev Liste) Haritaya Bas
-        sabit_olaylar.forEach(olay => addStrikeMarker(olay, false));
+        async function update() {
+            const res = await fetch('/api/state?t=' + Date.now());
+            const data = await res.json();
+            
+            document.getElementById('last-update').innerText = `Son Güncelleme: ${data.lastUpdated}`;
+            document.getElementById('ai-text').innerText = data.aiAnalysis;
+            
+            const score = data.riskScore || 0;
+            document.getElementById('risk-score-text').innerText = score;
+            document.getElementById('gauge-fill').style.strokeDashoffset = 125.6 - (125.6 * score / 100);
+            
+            const hurmuz = data.hurmuzStatus || "AÇIK";
+            document.getElementById('hurmuz-text').innerText = hurmuz;
+            document.getElementById('hurmuz-container').className = `p-4 rounded-xl text-center font-black text-xl text-white mb-6 uppercase tracking-widest shadow-xl ${hurmuz.includes("AÇIK") ? 'bg-blue-600' : 'bg-red-600'}`;
 
-        // --- VERİ ÇEKME VE EKRANI DOLDURMA ---
-        async function loadDashboard() {
-            try {
-                const res = await fetch('/api/state?t=' + Date.now());
-                const data = await res.json();
-                
-                document.getElementById('last-update').innerText = `SON GÜNCELLEME: ${data.lastUpdated}`;
-                document.getElementById('ai-text').innerText = data.aiAnalysis || "Veri bekleniyor...";
+            const m = data.market || {};
+            const formatPct = (val) => `<span class="${val > 0 ? 'text-green-600' : 'text-red-600'} text-[10px]">${val > 0 ? '+' : ''}${val}%</span>`;
+            
+            let html = '';
+            const list = [
+                {n: 'Brent Petrol', v: m.brent, p: m.brentPct, c: 'orange-500'},
+                {n: 'Doğal Gaz (AB)', v: m.gas, p: m.gasPct, c: 'orange-600'},
+                {n: 'Altın (Ons)', v: m.gold, p: m.goldPct, c: 'yellow-600'},
+                {n: 'Navlun (BDRY)', v: m.shipping, p: m.shippingPct, c: 'blue-800'},
+                {n: 'Uranyum Fonu', v: m.uranium, p: m.uraniumPct, c: 'purple-600'}
+            ];
+            list.forEach(i => html += `<div class="metric-card border-l-${i.c}"><div class="text-[9px] font-bold text-gray-400 uppercase">${i.n}</div><div class="text-lg font-black">$${i.v || 0} ${formatPct(i.p || 0)}</div></div>`);
+            (data.manualMetrics || []).forEach(i => html += `<div class="metric-card border-l-gray-800"><div class="text-[9px] font-bold text-gray-400 uppercase">${i.name}</div><div class="text-lg font-black">${i.value} <span class="text-[9px] text-gray-400">${i.unit}</span></div></div>`);
+            document.getElementById('metrics-container').innerHTML = html;
 
-                // Gauge Chart Animasyonu
-                const score = data.riskScore || 0;
-                document.getElementById('risk-score-text').innerText = score;
-                const offset = 125.6 - (125.6 * score / 100); 
-                document.getElementById('gauge-fill').style.strokeDashoffset = offset;
-                document.getElementById('gauge-fill').style.stroke = score > 75 ? "#dc2626" : score > 40 ? "#f59e0b" : "#10b981";
-                document.getElementById('risk-score-text').style.color = score > 75 ? "#dc2626" : score > 40 ? "#f59e0b" : "#10b981";
-
-                const hurmuzDurum = data.hurmuzStatus || "AÇIK / GÜVENLİ";
-                const hBox = document.getElementById('hurmuz-container');
-                document.getElementById('hurmuz-text').innerText = hurmuzDurum;
-                hBox.style.backgroundColor = hurmuzDurum.includes("AÇIK") ? "#2563eb" : hurmuzDurum.includes("KAPALI") ? "#dc2626" : "#ea580c";
-
-                // Metrikleri Birleştirme
-                const m = data.market || {};
-                const manualList = data.manualMetrics || [];
-                const formatPct = (val) => val > 0 ? `<span class="text-green-600">+${val}%</span>` : val < 0 ? `<span class="text-red-600">${val}%</span>` : `<span class="text-gray-400">0%</span>`;
-                
-                let metricsHtml = `
-                    <div class="metric-card border-l-orange-500"><div class="text-[10px] font-bold text-gray-500 uppercase">Brent Petrol</div><div class="text-xl font-bold">$${m.brent || 0} <span class="text-sm">${formatPct(m.brentPct)}</span></div></div>
-                    <div class="metric-card border-l-orange-500"><div class="text-[10px] font-bold text-gray-500 uppercase">Doğal Gaz (AB)</div><div class="text-xl font-bold">€${m.gas || 0} <span class="text-sm">${formatPct(m.gasPct)}</span></div></div>
-                    <div class="metric-card border-l-orange-500"><div class="text-[10px] font-bold text-gray-500 uppercase">Doğal Gaz (ABD)</div><div class="text-xl font-bold">$${m.usGas || 0} <span class="text-sm">${formatPct(m.usGasPct)}</span></div></div>
-                    
-                    <div class="metric-card border-l-yellow-600"><div class="text-[10px] font-bold text-gray-500 uppercase">Altın (Ons)</div><div class="text-xl font-bold">$${m.gold || 0} <span class="text-sm">${formatPct(m.goldPct)}</span></div></div>
-                    <div class="metric-card border-l-gray-400"><div class="text-[10px] font-bold text-gray-500 uppercase">Gümüş (Ons)</div><div class="text-xl font-bold">$${m.silver || 0} <span class="text-sm">${formatPct(m.silverPct)}</span></div></div>
-                    <div class="metric-card border-l-blue-400"><div class="text-[10px] font-bold text-gray-500 uppercase">Lityum (Tekno)</div><div class="text-xl font-bold">$${m.lithium || 0} <span class="text-sm">${formatPct(m.lithiumPct)}</span></div></div>
-                    
-                    <div class="metric-card border-l-red-800"><div class="text-[10px] font-bold text-gray-500 uppercase">Bakır (Sanayi)</div><div class="text-xl font-bold">$${m.copper || 0} <span class="text-sm">${formatPct(m.copperPct)}</span></div></div>
-                    <div class="metric-card border-l-red-800"><div class="text-[10px] font-bold text-gray-500 uppercase">Demir Cevheri</div><div class="text-xl font-bold">$${m.iron || 0} <span class="text-sm">${formatPct(m.ironPct)}</span></div></div>
-                    <div class="metric-card border-l-blue-900"><div class="text-[10px] font-bold text-gray-500 uppercase">Navlun (BDRY)</div><div class="text-xl font-bold">$${m.shipping || 0} <span class="text-sm">${formatPct(m.shippingPct)}</span></div></div>
-
-                    <div class="metric-card border-l-green-600"><div class="text-[10px] font-bold text-gray-500 uppercase">Buğday</div><div class="text-xl font-bold">$${m.wheat || 0} <span class="text-sm">${formatPct(m.wheatPct)}</span></div></div>
-                    <div class="metric-card border-l-green-600"><div class="text-[10px] font-bold text-gray-500 uppercase">Mısır</div><div class="text-xl font-bold">$${m.corn || 0} <span class="text-sm">${formatPct(m.cornPct)}</span></div></div>
-                    
-                    <div class="metric-card border-l-purple-600"><div class="text-[10px] font-bold text-gray-500 uppercase">Uranyum Fonu</div><div class="text-xl font-bold">$${m.uranium || 0} <span class="text-sm">${formatPct(m.uraniumPct)}</span></div></div>
-                    <div class="metric-card border-l-black"><div class="text-[10px] font-bold text-gray-500 uppercase">VIX (Korku)</div><div class="text-xl font-bold">${m.vix || 0} <span class="text-sm">${formatPct(m.vixPct)}</span></div></div>
-                `;
-
-                manualList.forEach(item => {
-                    metricsHtml += `<div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">${item.name} <span class="bg-gray-100 text-gray-400 px-1 rounded ml-1 text-[8px]">MNL</span></div><div class="text-xl font-bold text-blue-900">${item.value} <span class="text-xs text-gray-500 ml-1 font-semibold">${item.unit}</span></div></div>`;
-                });
-                document.getElementById('metrics-container').innerHTML = metricsHtml;
-
-                // Botun Yeni Bulduğu Haberleri Haritaya Ekle (Sabitler kalır, dinamikler güncellenir)
-                dynamicMarkers.forEach(m => map.removeLayer(m));
-                dynamicMarkers = [];
-                if(data.mapStrikes) data.mapStrikes.forEach(olay => addStrikeMarker(olay, true));
-
-                if(data.newsFeed) document.getElementById('news-feed').innerHTML = data.newsFeed.map(n => `<div class="border-b border-gray-100 pb-3"><a href="${n.link}" target="_blank" class="text-sm font-semibold text-gray-800 hover:text-red-600 block leading-tight">${n.title}</a></div>`).join('');
-
-            } catch (err) { console.error("API okunamadı:", err); }
+            dynamicMarkers.forEach(m => map.removeLayer(m));
+            (data.mapStrikes || []).forEach(s => addMarker(s, true));
+            document.getElementById('news-feed').innerHTML = (data.newsFeed || []).map(n => `<div class="border-b pb-2"><a href="${n.link}" target="_blank" class="text-xs font-bold hover:text-red-600 block leading-tight">${n.title}</a></div>`).join('');
         }
 
-        loadDashboard();
-        setInterval(loadDashboard, 60000);
+        update();
+        setInterval(update, 60000);
     </script>
 </body>
 </html>
