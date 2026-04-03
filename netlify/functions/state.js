@@ -1,17 +1,23 @@
 const { getStore, connectLambda } = require('@netlify/blobs');
 
 const defaultData = {
-    version: "3.0.0",
+    version: "4.0.0",
     lastUpdated: "Henüz güncellenmedi",
     hurmuzStatus: "AÇIK / GÜVENLİ",
-    market: { brent: 0, brentPct: 0, wti: 0, gold: 0, goldPct: 0, gas: 0, gasPct: 0, vix: 0, vixPct: 0 },
-    manual: { polyester: 0, gubre: 0, jetFuel: 0, cds: 0 },
+    aiAnalysis: "Sistem başlatılıyor...",
+    market: { brent: 0, brentPct: 0, wti: 0, gold: 0, goldPct: 0, gas: 0, gasPct: 0, vix: 0, vixPct: 0, silver: 0, silverPct: 0, uranium: 0, uraniumPct: 0, shipping: 0, shippingPct: 0 },
+    // YENİ MODÜLER MANUEL LİSTE
+    manualMetrics: [
+        { name: "Polyester", unit: "$/Ton", value: 1250 },
+        { name: "Gübre", unit: "$/Ton", value: 480 },
+        { name: "Jet Yakıtı", unit: "$/Bbl", value: 85.2 },
+        { name: "Türkiye 5Y CDS", unit: "Puan", value: 265 }
+    ],
     mapStrikes: [],
     newsFeed: []
 };
 
 exports.handler = async function(event) {
-    // Netlify Blobs'u eski "Lambda" modunda çalıştırmak için gereken sihirli satır:
     connectLambda(event);
 
     try {
@@ -20,7 +26,6 @@ exports.handler = async function(event) {
         if (event.httpMethod === 'GET') {
             let currentData = await store.get("state", { type: "json" });
             if (!currentData) currentData = defaultData;
-            
             return { statusCode: 200, body: JSON.stringify(currentData) };
         }
 
@@ -31,12 +36,12 @@ exports.handler = async function(event) {
             let currentData = await store.get("state", { type: "json" });
             if (!currentData) currentData = defaultData;
 
+            // Manuel Verileri ve Hürmüzü Güncelle
             currentData.hurmuzStatus = body.data.hurmuzStatus;
-            currentData.manual = body.data.manual;
+            currentData.manualMetrics = body.data.manualMetrics; // Dinamik liste kaydediliyor
             currentData.lastUpdated = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
 
             await store.setJSON("state", currentData);
-
             return { statusCode: 200, body: JSON.stringify({ success: true }) };
         }
 
