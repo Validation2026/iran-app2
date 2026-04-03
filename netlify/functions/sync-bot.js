@@ -1,6 +1,5 @@
 const { getStore, connectLambda } = require('@netlify/blobs');
 const Parser = require('rss-parser');
-const yahooFinance = require('yahoo-finance2').default;
 
 const parser = new Parser();
 
@@ -25,7 +24,7 @@ const geo_db = {
 const jitter = (val) => val + (Math.random() * 0.1 - 0.05);
 
 exports.handler = async function(event) {
-    // Ortam değişkenlerini bağlamak için bu satır şart:
+    // Ortam değişkenlerini bağla
     connectLambda(event);
 
     if (event.body) {
@@ -69,21 +68,36 @@ exports.handler = async function(event) {
         currentData.newsFeed = allNews.slice(0, 25);
         currentData.mapStrikes = strikes;
 
-        // 2. YFİNANCE İLE PİYASA
-        const getMarket = async (symbol) => {
-            try {
-                const quote = await yahooFinance.quote(symbol);
-                return { price: quote.regularMarketPrice ? quote.regularMarketPrice.toFixed(2) : 0, pct: quote.regularMarketChangePercent ? quote.regularMarketChangePercent.toFixed(2) : 0 };
-            } catch (e) { return { price: 0, pct: 0 }; }
-        };
+        // 2. YFİNANCE YERİNE DOĞRUDAN YAHOO API KULLANIMI (Çok Daha Hızlı)
+        try {
+            const symbols = "BZ=F,CL=F,GC=F,TTF=F,^VIX";
+            const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            const results = {};
+            if (data && data.quoteResponse && data.quoteResponse.result) {
+                data.quoteResponse.result.forEach(q => {
+                    results[q.symbol] = {
+                        price: q.regularMarketPrice ? q.regularMarketPrice.toFixed(2) : 0,
+                        pct: q.regularMarketChangePercent ? q.regularMarketChangePercent.toFixed(2) : 0
+                    };
+                });
+            }
 
-        const [brent, wti, gold, gas, vix] = await Promise.all([
-            getMarket('BZ=F'), getMarket('CL=F'), getMarket('GC=F'), getMarket('TTF=F'), getMarket('^VIX')
-        ]);
+            const getRes = (sym) => results[sym] || { price: 0, pct: 0 };
 
-        currentData.market = {
-            brent: brent.price, brentPct: brent.pct, wti: wti.price, gold: gold.price, goldPct: gold.pct, gas: gas.price, gasPct: gas.pct, vix: vix.price, vixPct: vix.pct
-        };
+            currentData.market = {
+                brent: getRes('BZ=F').price, brentPct: getRes('BZ=F').pct,
+                wti: getRes('CL=F').price,
+                gold: getRes('GC=F').price, goldPct: getRes('GC=F').pct,
+                gas: getRes('TTF=F').price, gasPct: getRes('TTF=F').pct,
+                vix: getRes('^VIX').price, vixPct: getRes('^VIX').pct
+            };
+        } catch (err) {
+            console.log("Piyasa verisi çekilemedi:", err.message);
+        }
 
         currentData.lastUpdated = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
 
