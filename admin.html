@@ -11,8 +11,7 @@
         .font-headline { font-family: 'Outfit', sans-serif; }
         .section-card { background: #ffffff; border-radius: 1.5rem; padding: 2rem; border: 1px solid #e2e8f0; margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .label-text { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #718096; margin-bottom: 0.6rem; display: block; }
-        input, select { background: #ffffff; border: 1px solid #cbd5e0; border-radius: 0.75rem; padding: 0.75rem; width: 100%; font-weight: 700; transition: all 0.2s; }
-        input:focus, select:focus { border-color: #ba1e1e; outline: none; box-shadow: 0 0 0 3px rgba(186,30,30,0.1); }
+        input[type="text"], input[type="number"], select { background: #ffffff; border: 1px solid #cbd5e0; border-radius: 0.75rem; padding: 0.75rem; width: 100%; font-weight: 700; }
         .btn-sync { background: #3b82f6; color: white; border-radius: 0.75rem; }
         .btn-save { background: #ba1e1e; color: white; border-radius: 0.75rem; }
     </style>
@@ -20,13 +19,19 @@
 <body class="p-4 md:p-12">
     <div class="max-w-4xl mx-auto">
         <header class="flex justify-between items-center mb-8 border-b border-[#e2e8f0] pb-6">
-            <div>
-                <h1 class="text-3xl font-black font-headline tracking-tighter uppercase text-[#1a202c]">KONTROL PANELİ</h1>
-                <p class="text-[#718096] text-[10px] font-black tracking-[0.3em] mt-1">SİSTEM YÖNETİMİ</p>
-            </div>
+            <div><h1 class="text-3xl font-black font-headline tracking-tighter uppercase text-[#1a202c]">KONTROL PANELİ</h1></div>
         </header>
 
         <form id="adminForm" class="space-y-6">
+            
+            <div class="section-card border-l-4 border-l-[#dc2626]">
+                <div class="flex justify-between">
+                    <label class="label-text text-red-600">GENEL RİSK SKORU (0-100)</label>
+                    <span id="riskValueLabel" class="font-black text-red-600 text-lg">50</span>
+                </div>
+                <input type="range" id="riskScore" min="0" max="100" value="50" class="w-full mt-2 accent-red-600" oninput="document.getElementById('riskValueLabel').innerText = this.value">
+            </div>
+
             <div class="section-card border-l-4 border-l-[#3b82f6]">
                 <label class="label-text text-blue-600">HÜRMÜZ BOĞAZI DURUMU</label>
                 <select id="hurmuzStatus" class="bg-blue-50 text-blue-900">
@@ -42,8 +47,7 @@
                     <label class="label-text mb-0">MANUEL FİNANSAL GİRDİLER</label>
                     <button type="button" id="addMetricBtn" class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-lg text-xs font-black transition">+ YENİ EKLE</button>
                 </div>
-                <div id="dynamic-metrics" class="space-y-3">
-                    </div>
+                <div id="dynamic-metrics" class="space-y-3"></div>
             </div>
 
             <div class="sticky bottom-6 bg-white/90 backdrop-blur-md p-6 rounded-2xl border border-gray-200 shadow-xl flex gap-4">
@@ -56,8 +60,6 @@
 
     <script>
         const metricsContainer = document.getElementById('dynamic-metrics');
-
-        // Satır Ekleme Fonksiyonu
         function createMetricRow(name = "", unit = "", value = 0) {
             const row = document.createElement('div');
             row.className = "flex gap-2 items-center metric-row bg-gray-50 p-2 rounded-xl border border-gray-100";
@@ -65,62 +67,48 @@
                 <input type="text" placeholder="İsim (Örn: Çelik)" class="metric-name flex-[2] text-sm" value="${name}" required>
                 <input type="text" placeholder="Birim (Örn: $/Ton)" class="metric-unit flex-1 text-sm" value="${unit}">
                 <input type="number" step="any" placeholder="Değer" class="metric-value flex-1 text-sm text-blue-700 font-black" value="${value}" required>
-                <button type="button" class="bg-red-100 hover:bg-red-200 text-red-600 px-4 py-3 rounded-lg font-black transition" onclick="this.parentElement.remove()">X</button>
+                <button type="button" class="bg-red-100 text-red-600 px-4 py-3 rounded-lg font-black" onclick="this.parentElement.remove()">X</button>
             `;
             metricsContainer.appendChild(row);
         }
-
-        // Yeni Ekle Butonu
         document.getElementById('addMetricBtn').onclick = () => createMetricRow();
 
-        // Verileri Yükle
         fetch('/api/state').then(res => res.json()).then(data => {
             document.getElementById('hurmuzStatus').value = data.hurmuzStatus || "AÇIK / GÜVENLİ";
-            
+            document.getElementById('riskScore').value = data.riskScore || 50;
+            document.getElementById('riskValueLabel').innerText = data.riskScore || 50;
             const metrics = data.manualMetrics || [];
-            if(metrics.length === 0) {
-                createMetricRow("Polyester", "$/Ton", 1250); // Boşsa 1 tane varsayılan aç
-            } else {
-                metrics.forEach(m => createMetricRow(m.name, m.unit, m.value));
-            }
+            if(metrics.length === 0) createMetricRow("Polyester", "$/Ton", 1250);
+            else metrics.forEach(m => createMetricRow(m.name, m.unit, m.value));
         });
 
-        // Verileri Kaydet
         document.getElementById('adminForm').onsubmit = async (e) => {
             e.preventDefault();
-            
-            // Satırları toparla
             const finalMetrics = [];
             document.querySelectorAll('.metric-row').forEach(row => {
-                finalMetrics.push({
-                    name: row.querySelector('.metric-name').value,
-                    unit: row.querySelector('.metric-unit').value,
-                    value: parseFloat(row.querySelector('.metric-value').value) || 0
-                });
+                finalMetrics.push({ name: row.querySelector('.metric-name').value, unit: row.querySelector('.metric-unit').value, value: parseFloat(row.querySelector('.metric-value').value) || 0 });
             });
-
             const payload = {
                 pin: document.getElementById('pin').value.trim(),
                 data: {
+                    riskScore: parseInt(document.getElementById('riskScore').value),
                     hurmuzStatus: document.getElementById('hurmuzStatus').value,
                     manualMetrics: finalMetrics
                 }
             };
-            
             try {
                 const res = await fetch('/api/state', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-                if(res.ok) alert("✅ Modüler Veriler Kaydedildi!"); else alert("❌ Hata veya Yanlış PIN");
+                if(res.ok) alert("✅ Kaydedildi!"); else alert("❌ Hata/PIN");
             } catch(err) { alert("Bağlantı hatası"); }
         };
 
-        // Botu Tetikle
         document.getElementById('btnSync').onclick = async () => {
             const pin = document.getElementById('pin').value.trim();
-            if(!pin) return alert("Önce PIN girin!");
+            if(!pin) return alert("PIN girin!");
             document.getElementById('btnSync').innerText = "TARANIYOR...";
             try {
                 const res = await fetch('/api/sync-bot', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pin}) });
-                if(res.ok) alert("🤖 Haberler ve Piyasalar Güncellendi!"); else alert("❌ Hata veya Yanlış PIN!");
+                if(res.ok) alert("🤖 Güncellendi!"); else alert("❌ Hata/PIN!");
             } catch(e) { alert("Bağlantı hatası!"); }
             document.getElementById('btnSync').innerText = "BOTU ÇALIŞTIR";
         };
