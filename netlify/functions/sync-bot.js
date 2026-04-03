@@ -1,14 +1,16 @@
 const { getStore, connectLambda } = require('@netlify/blobs');
 const Parser = require('rss-parser');
 
-const parser = new Parser();
+const parser = new Parser({
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+});
 
 const defaultData = {
     version: "3.0.0",
     lastUpdated: "Henüz güncellenmedi",
     hurmuzStatus: "AÇIK / GÜVENLİ",
     market: { brent: 0, brentPct: 0, wti: 0, gold: 0, goldPct: 0, gas: 0, gasPct: 0, vix: 0, vixPct: 0 },
-    manual: { polyester: 0, gubre: 0, jetFuel: 0, cds: 0 },
+    manual: { polyester: 1250, gubre: 480, jetFuel: 85.2, cds: 265 },
     mapStrikes: [],
     newsFeed: []
 };
@@ -23,8 +25,23 @@ const geo_db = {
 
 const jitter = (val) => val + (Math.random() * 0.1 - 0.05);
 
+// Yahoo'nun engellemediği v8 Chart API'si
+async function getTicker(symbol) {
+    try {
+        const url = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`;
+        const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }});
+        const json = await res.json();
+        const meta = json.chart.result[0].meta;
+        const current = meta.regularMarketPrice;
+        const prev = meta.chartPreviousClose;
+        const pct = ((current - prev) / prev) * 100;
+        return { price: current.toFixed(2), pct: pct.toFixed(2) };
+    } catch (e) {
+        return { price: 0, pct: 0 };
+    }
+}
+
 exports.handler = async function(event) {
-    // Ortam değişkenlerini bağla
     connectLambda(event);
 
     if (event.body) {
@@ -52,52 +69,33 @@ exports.handler = async function(event) {
                     for (const [city, data] of Object.entries(geo_db)) {
                         if (item.title.toLowerCase().includes(city.toLowerCase())) {
                             strikes.push({
-                                city: city, lat: jitter(data[0]), lon: jitter(data[1]),
+                                city: `🔴 SON DAKİKA: ${city}`, 
+                                lat: jitter(data[0]), lon: jitter(data[1]),
                                 actor: data[2], title: item.title, link: item.link
                             });
                             break;
                         }
                     }
                 });
-            } catch (err) {
-                console.log("Haber okuma hatası: ", err.message);
-            }
+            } catch (err) {}
         }
 
         allNews.sort((a, b) => new Date(b.date) - new Date(a.date));
         currentData.newsFeed = allNews.slice(0, 25);
         currentData.mapStrikes = strikes;
 
-        // 2. YFİNANCE YERİNE DOĞRUDAN YAHOO API KULLANIMI (Çok Daha Hızlı)
-        try {
-            const symbols = "BZ=F,CL=F,GC=F,TTF=F,^VIX";
-            const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`;
-            
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            const results = {};
-            if (data && data.quoteResponse && data.quoteResponse.result) {
-                data.quoteResponse.result.forEach(q => {
-                    results[q.symbol] = {
-                        price: q.regularMarketPrice ? q.regularMarketPrice.toFixed(2) : 0,
-                        pct: q.regularMarketChangePercent ? q.regularMarketChangePercent.toFixed(2) : 0
-                    };
-                });
-            }
+        // 2. FİNANSAL METRİKLER (Engel Yemeyen Metot)
+        const [brent, wti, gold, gas, vix] = await Promise.all([
+            getTicker('BZ=F'), getTicker('CL=F'), getTicker('GC=F'), getTicker('TTF=F'), getTicker('^VIX')
+        ]);
 
-            const getRes = (sym) => results[sym] || { price: 0, pct: 0 };
-
-            currentData.market = {
-                brent: getRes('BZ=F').price, brentPct: getRes('BZ=F').pct,
-                wti: getRes('CL=F').price,
-                gold: getRes('GC=F').price, goldPct: getRes('GC=F').pct,
-                gas: getRes('TTF=F').price, gasPct: getRes('TTF=F').pct,
-                vix: getRes('^VIX').price, vixPct: getRes('^VIX').pct
-            };
-        } catch (err) {
-            console.log("Piyasa verisi çekilemedi:", err.message);
-        }
+        currentData.market = {
+            brent: brent.price, brentPct: brent.pct,
+            wti: wti.price,
+            gold: gold.price, goldPct: gold.pct,
+            gas: gas.price, gasPct: gas.pct,
+            vix: vix.price, vixPct: vix.pct
+        };
 
         currentData.lastUpdated = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
 
