@@ -5,6 +5,12 @@
 [functions]
   directory = "netlify/functions"
 
+# /api/ klasörüne gelen tüm istekleri arka planda Netlify Functions'a yönlendirir
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
 # Otomatik haber ve piyasa tarama workflow'u (Her saat başı çalışır)
 [functions."sync-bot"]
   schedule = "@hourly"
