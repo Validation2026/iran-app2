@@ -1,6 +1,5 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore, connectLambda } = require('@netlify/blobs');
 
-// Sunucusuz ortamda dosya okumak çökme yaratır, bu yüzden şablonu buraya gömdük
 const defaultData = {
     version: "3.0.0",
     lastUpdated: "Henüz güncellenmedi",
@@ -12,12 +11,15 @@ const defaultData = {
 };
 
 exports.handler = async function(event) {
+    // Netlify Blobs'u eski "Lambda" modunda çalıştırmak için gereken sihirli satır:
+    connectLambda(event);
+
     try {
         const store = getStore("iran-risk");
 
         if (event.httpMethod === 'GET') {
             let currentData = await store.get("state", { type: "json" });
-            if (!currentData) currentData = defaultData; // Blob boşsa varsayılanı kullan
+            if (!currentData) currentData = defaultData;
             
             return { statusCode: 200, body: JSON.stringify(currentData) };
         }
@@ -29,7 +31,6 @@ exports.handler = async function(event) {
             let currentData = await store.get("state", { type: "json" });
             if (!currentData) currentData = defaultData;
 
-            // Manuel verileri güncelle
             currentData.hurmuzStatus = body.data.hurmuzStatus;
             currentData.manual = body.data.manual;
             currentData.lastUpdated = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
@@ -41,7 +42,6 @@ exports.handler = async function(event) {
 
         return { statusCode: 405, body: "Method Not Allowed" };
     } catch (error) {
-        // Çökmeyi engelle ve hatayı düzgün bir JSON olarak döndür
         return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
 };
