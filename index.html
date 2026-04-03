@@ -6,7 +6,6 @@
     <title>İran Savaş Monitörü</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -35,14 +34,14 @@
         </div>
     </header>
 
-    <div class="bg-indigo-950 text-white rounded-xl shadow-lg border border-indigo-500/50 p-5 mb-6 relative overflow-hidden">
-        <div class="absolute top-0 right-0 p-4 opacity-10">
-            <span class="material-symbols-outlined text-8xl">memory</span>
+    <div class="bg-white rounded-xl shadow-sm border-l-4 border-l-gray-600 p-4 mb-4 flex items-center gap-4">
+        <div class="bg-gray-100 p-2 rounded-full hidden md:block">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-600"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
         </div>
-        <h2 class="font-bold text-sm uppercase tracking-wider flex items-center gap-2 mb-3 text-indigo-300">
-            <span class="material-symbols-outlined">smart_toy</span> YAPAY ZEKA RİSK SENTEZİ
-        </h2>
-        <p id="ai-text" class="text-[15px] leading-relaxed text-indigo-50 font-medium relative z-10 italic">Yapay zeka analizini yüklüyor...</p>
+        <div>
+            <h3 class="text-[11px] font-black tracking-widest text-gray-500 uppercase mb-1">RİSK ANALİZİ VE SENTEZ</h3>
+            <p id="ai-text" class="text-sm font-semibold text-gray-800 leading-tight">Sistem başlatılıyor...</p>
+        </div>
     </div>
 
     <div id="hurmuz-container" class="hurmuz-box p-4 rounded-xl text-center font-bold text-xl tracking-widest uppercase text-white shadow-md mb-6 bg-blue-600">
@@ -78,9 +77,12 @@
             {"isim": "İsfahan 8. Taktik Hava Üssü (İran)", "lat": 32.74, "lon": 51.86}
         ];
 
+        // STAR (YILDIZ) HATASINA KESİN ÇÖZÜM: Gerçek SVG Kodu Kullanıldı
+        const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#d1d5db" stroke="#4b5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+
         askeri_usler.forEach(us => {
-            const star = L.divIcon({ html: '<span class="material-symbols-outlined text-gray-600" style="font-family: \'Material Symbols Outlined\' !important; font-size:22px;">star</span>', className: '' });
-            L.marker([us.lat, us.lon], {icon: star}).addTo(map).bindPopup(`<b style='color:black;'>🛡️ ${us.isim}</b>`);
+            const starIcon = L.divIcon({ html: starSvg, className: '', iconSize: [20,20] });
+            L.marker([us.lat, us.lon], {icon: starIcon}).addTo(map).bindPopup(`<b style='color:black;'>🛡️ ${us.isim}</b>`);
         });
 
         function addStrikeMarker(olay) {
@@ -109,7 +111,7 @@
                 
                 document.getElementById('last-update').innerText = `SON GÜNCELLEME: ${data.lastUpdated}`;
                 
-                // AI Metnini Yazdır
+                // Senaryo Tabanlı Analiz Yazısı
                 document.getElementById('ai-text').innerText = data.aiAnalysis || "Veri bekleniyor...";
 
                 // Hürmüz Durumu
@@ -133,14 +135,9 @@
                     <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Gümüş (Ons)</div><div class="text-xl font-bold">$${m.silver} <span class="text-sm">${formatPct(m.silverPct)}</span></div></div>
                     <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">VIX (Korku)</div><div class="text-xl font-bold">${m.vix} <span class="text-sm">${formatPct(m.vixPct)}</span></div></div>
                     <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Sıvı Hidrokarbon (WTI)</div><div class="text-xl font-bold">$${m.wti}</div></div>
-                    
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Jet Yakıtı (Mnl)</div><div class="text-xl font-bold">$${man.jetFuel}</div></div>
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Polyester (Mnl)</div><div class="text-xl font-bold">$${man.polyester}</div></div>
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Gübre (Mnl)</div><div class="text-xl font-bold">$${man.gubre}</div></div>
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Türkiye 5Y CDS (Mnl)</div><div class="text-xl font-bold">${man.cds}</div></div>
                 `;
 
-                // Haberleri ve Haritayı Doldur
+                // Harita ve Haberler
                 dynamicMarkers.forEach(m => map.removeLayer(m));
                 dynamicMarkers = [];
                 if(data.mapStrikes) {
