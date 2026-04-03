@@ -2,17 +2,24 @@ const { getStore, connectLambda } = require('@netlify/blobs');
 const Parser = require('rss-parser');
 const parser = new Parser({ headers: { 'User-Agent': 'Mozilla/5.0' } });
 
+// 1. GÜNCELLEME: Chart API yerine doğrudan Spot Quote API'sine geçildi
 async function fetchYahooDirect(symbol) {
     try {
-        const url = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1m&includePrePost=false`;
+        const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`;
         const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }});
         const data = await res.json();
-        if (!data.chart || !data.chart.result) return null;
-        const meta = data.chart.result[0].meta;
-        const current = meta.regularMarketPrice;
-        const prev = meta.previousClose || meta.chartPreviousClose;
-        const pct = (((current - prev) / prev) * 100).toFixed(2);
-        return { price: parseFloat(current).toFixed(2), pct: pct };
+        
+        // Veri gelip gelmediğini kontrol et
+        if (!data.quoteResponse || !data.quoteResponse.result || data.quoteResponse.result.length === 0) return null;
+        
+        const quote = data.quoteResponse.result[0];
+        const current = quote.regularMarketPrice;
+        const pct = quote.regularMarketChangePercent;
+        
+        // Bazen tahta kapalıyken undefined dönebilir, patlamaması için kontrol
+        if (current === undefined || pct === undefined) return null;
+
+        return { price: parseFloat(current).toFixed(2), pct: parseFloat(pct).toFixed(2) };
     } catch (e) { return null; }
 }
 
@@ -28,8 +35,9 @@ exports.handler = async function(event) {
         let currentData = await store.get("state", { type: "json" });
         if (!currentData) return { statusCode: 404, body: "State not found" };
 
+        // 2. GÜNCELLEME: Brent için CO=F yerine spot tahtaya daha yakın olan BZ=F kullanıldı
         const tickers = {
-            brent: 'CO=F', gold: 'GC=F', gas: 'TTF=F', vix: '^VIX', silver: 'SI=F',
+            brent: 'BZ=F', gold: 'GC=F', gas: 'TTF=F', vix: '^VIX', silver: 'SI=F',
             uranium: 'URA', shipping: 'BDRY', wheat: 'ZW=F', corn: 'ZC=F',
             copper: 'HG=F', lithium: 'LIT', iron: 'TIO=F', usGas: 'NG=F'
         };
@@ -44,6 +52,7 @@ exports.handler = async function(event) {
             }
         });
 
+        // AŞAĞIDAKİ HİÇBİR ŞEYE DOKUNULMADI
         const news_keywords = {
             "tahran": [35.68, 51.38, "il"], "isfahan": [32.65, 51.66, "il"], "iran": [35.68, 51.38, "il"],
             "tel aviv": [32.08, 34.78, "ir"], "kudüs": [31.76, 35.21, "ir"], "israil": [31.76, 35.21, "ir"],
