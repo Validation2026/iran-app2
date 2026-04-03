@@ -42,9 +42,15 @@
                 </select>
             </div>
 
+            <div class="section-card border-l-4 border-l-green-600">
+                <label class="label-text text-green-600 mb-4">OTOMATİK VERİLERİ DÜZENLE (PİYASA)</label>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="market-inputs">
+                    </div>
+            </div>
+
             <div class="section-card">
                 <div class="flex justify-between items-center mb-4">
-                    <label class="label-text mb-0">MANUEL FİNANSAL GİRDİLER</label>
+                    <label class="label-text mb-0">ÖZEL MANUEL METRİKLER (SINIRSIZ)</label>
                     <button type="button" id="addMetricBtn" class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-lg text-xs font-black transition">+ YENİ EKLE</button>
                 </div>
                 <div id="dynamic-metrics" class="space-y-3"></div>
@@ -53,19 +59,32 @@
             <div class="sticky bottom-6 bg-white/90 backdrop-blur-md p-6 rounded-2xl border border-gray-200 shadow-xl flex gap-4">
                 <input type="password" id="pin" placeholder="PIN KODU" class="w-1/3 text-center tracking-widest" required>
                 <button type="button" id="btnSync" class="btn-sync flex-1 font-black uppercase tracking-wider shadow-lg hover:bg-blue-700 transition">BOTU ÇALIŞTIR</button>
-                <button type="submit" class="btn-save flex-1 font-black uppercase tracking-wider shadow-lg hover:bg-red-800 transition">MANUEL VERİLERİ KAYDET</button>
+                <button type="submit" class="btn-save flex-1 font-black uppercase tracking-wider shadow-lg hover:bg-red-800 transition">KAYDET</button>
             </div>
         </form>
     </div>
 
     <script>
+        const marketTickers = ['brent', 'gold', 'gas', 'vix', 'silver', 'uranium', 'shipping', 'wheat', 'corn', 'copper', 'lithium', 'iron', 'usGas'];
+        const marketInputsDiv = document.getElementById('market-inputs');
         const metricsContainer = document.getElementById('dynamic-metrics');
+
+        // Piyasa Inputlarını Oluştur
+        marketTickers.forEach(t => {
+            marketInputsDiv.innerHTML += `
+                <div>
+                    <label class="text-[9px] font-bold text-gray-400 uppercase">${t}</label>
+                    <input type="number" step="any" id="m_${t}" class="w-full border-b-2 border-gray-100 p-1 font-bold outline-none focus:border-blue-500">
+                </div>
+            `;
+        });
+
         function createMetricRow(name = "", unit = "", value = 0) {
             const row = document.createElement('div');
             row.className = "flex gap-2 items-center metric-row bg-gray-50 p-2 rounded-xl border border-gray-100";
             row.innerHTML = `
-                <input type="text" placeholder="İsim (Örn: Çelik)" class="metric-name flex-[2] text-sm" value="${name}" required>
-                <input type="text" placeholder="Birim (Örn: $/Ton)" class="metric-unit flex-1 text-sm" value="${unit}">
+                <input type="text" placeholder="İsim" class="metric-name flex-[2] text-sm" value="${name}" required>
+                <input type="text" placeholder="Birim" class="metric-unit flex-1 text-sm" value="${unit}">
                 <input type="number" step="any" placeholder="Değer" class="metric-value flex-1 text-sm text-blue-700 font-black" value="${value}" required>
                 <button type="button" class="bg-red-100 text-red-600 px-4 py-3 rounded-lg font-black" onclick="this.parentElement.remove()">X</button>
             `;
@@ -73,32 +92,55 @@
         }
         document.getElementById('addMetricBtn').onclick = () => createMetricRow();
 
-        fetch('/api/state').then(res => res.json()).then(data => {
+        async function loadData() {
+            const res = await fetch('/api/state');
+            const data = await res.json();
+            
             document.getElementById('hurmuzStatus').value = data.hurmuzStatus || "AÇIK / GÜVENLİ";
             document.getElementById('riskScore').value = data.riskScore || 50;
             document.getElementById('riskValueLabel').innerText = data.riskScore || 50;
+
+            // Piyasa Verilerini Inputlara Doldur
+            marketTickers.forEach(t => {
+                if(data.market[t] !== undefined) document.getElementById('m_'+t).value = data.market[t];
+            });
+
+            // Manuel Metrikleri Doldur
+            metricsContainer.innerHTML = "";
             const metrics = data.manualMetrics || [];
-            if(metrics.length === 0) createMetricRow("Polyester", "$/Ton", 1250);
-            else metrics.forEach(m => createMetricRow(m.name, m.unit, m.value));
-        });
+            metrics.forEach(m => createMetricRow(m.name, m.unit, m.value));
+        }
 
         document.getElementById('adminForm').onsubmit = async (e) => {
             e.preventDefault();
-            const finalMetrics = [];
-            document.querySelectorAll('.metric-row').forEach(row => {
-                finalMetrics.push({ name: row.querySelector('.metric-name').value, unit: row.querySelector('.metric-unit').value, value: parseFloat(row.querySelector('.metric-value').value) || 0 });
+            
+            const marketObj = {};
+            marketTickers.forEach(t => {
+                marketObj[t] = parseFloat(document.getElementById('m_'+t).value) || 0;
             });
+
+            const finalManualMetrics = [];
+            document.querySelectorAll('.metric-row').forEach(row => {
+                finalManualMetrics.push({ 
+                    name: row.querySelector('.metric-name').value, 
+                    unit: row.querySelector('.metric-unit').value, 
+                    value: parseFloat(row.querySelector('.metric-value').value) || 0 
+                });
+            });
+
             const payload = {
                 pin: document.getElementById('pin').value.trim(),
                 data: {
                     riskScore: parseInt(document.getElementById('riskScore').value),
                     hurmuzStatus: document.getElementById('hurmuzStatus').value,
-                    manualMetrics: finalMetrics
+                    market: marketObj,
+                    manualMetrics: finalManualMetrics
                 }
             };
+
             try {
                 const res = await fetch('/api/state', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-                if(res.ok) alert("✅ Kaydedildi!"); else alert("❌ Hata/PIN");
+                if(res.ok) alert("✅ Tüm Veriler Kaydedildi!"); else alert("❌ Hata/PIN");
             } catch(err) { alert("Bağlantı hatası"); }
         };
 
@@ -108,10 +150,15 @@
             document.getElementById('btnSync').innerText = "TARANIYOR...";
             try {
                 const res = await fetch('/api/sync-bot', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pin}) });
-                if(res.ok) alert("🤖 Güncellendi!"); else alert("❌ Hata/PIN!");
+                if(res.ok) {
+                    alert("🤖 Bot Verileri Güncelledi!");
+                    loadData();
+                } else alert("❌ Hata/PIN!");
             } catch(e) { alert("Bağlantı hatası!"); }
             document.getElementById('btnSync').innerText = "BOTU ÇALIŞTIR";
         };
+
+        loadData();
     </script>
 </body>
 </html>
