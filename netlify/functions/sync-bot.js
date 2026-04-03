@@ -6,12 +6,18 @@ const parser = new Parser({
 });
 
 const defaultData = {
-    version: "3.0.0",
+    version: "4.0.0",
     lastUpdated: "Henüz güncellenmedi",
     hurmuzStatus: "AÇIK / GÜVENLİ",
     aiAnalysis: "Sistem başlatılıyor...",
     market: { brent: 0, brentPct: 0, wti: 0, gold: 0, goldPct: 0, gas: 0, gasPct: 0, vix: 0, vixPct: 0, silver: 0, silverPct: 0, uranium: 0, uraniumPct: 0, shipping: 0, shippingPct: 0 },
-    manual: { polyester: 1250, gubre: 480, jetFuel: 85.2, cds: 265 },
+    // DİNAMİK MANUEL LİSTE EKLENDİ
+    manualMetrics: [
+        { name: "Polyester", unit: "$/Ton", value: 1250 },
+        { name: "Gübre", unit: "$/Ton", value: 480 },
+        { name: "Jet Yakıtı", unit: "$/Bbl", value: 85.2 },
+        { name: "Türkiye 5Y CDS", unit: "Puan", value: 265 }
+    ],
     mapStrikes: [],
     newsFeed: []
 };
