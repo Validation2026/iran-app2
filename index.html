@@ -219,17 +219,23 @@
                 const formatPct = (val) => val > 0 ? `<span class="text-green-600">+${val}%</span>` : val < 0 ? `<span class="text-red-600">${val}%</span>` : `<span class="text-gray-400">0%</span>`;
                 
                 let metricsHtml = `
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Brent Petrol</div><div class="text-xl font-bold">$${m.brent} <span class="text-sm">${formatPct(m.brentPct)}</span></div></div>
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Doğal Gaz (Avrupa)</div><div class="text-xl font-bold">€${m.gas} <span class="text-sm">${formatPct(m.gasPct)}</span></div></div>
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Navlun (BDRY)</div><div class="text-xl font-bold">$${m.shipping} <span class="text-sm">${formatPct(m.shippingPct)}</span></div></div>
+                    <div class="metric-card border-l-orange-500"><div class="text-[10px] font-bold text-gray-500 uppercase">Brent Petrol</div><div class="text-xl font-bold">$${m.brent || 0} <span class="text-sm">${formatPct(m.brentPct)}</span></div></div>
+                    <div class="metric-card border-l-orange-500"><div class="text-[10px] font-bold text-gray-500 uppercase">Doğal Gaz (AB)</div><div class="text-xl font-bold">€${m.gas || 0} <span class="text-sm">${formatPct(m.gasPct)}</span></div></div>
+                    <div class="metric-card border-l-orange-500"><div class="text-[10px] font-bold text-gray-500 uppercase">Doğal Gaz (ABD)</div><div class="text-xl font-bold">$${m.usGas || 0} <span class="text-sm">${formatPct(m.usGasPct)}</span></div></div>
                     
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Buğday (Gıda)</div><div class="text-xl font-bold">$${m.wheat} <span class="text-sm">${formatPct(m.wheatPct)}</span></div></div>
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Mısır (Gıda)</div><div class="text-xl font-bold">$${m.corn} <span class="text-sm">${formatPct(m.cornPct)}</span></div></div>
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Bakır (Sanayi)</div><div class="text-xl font-bold">$${m.copper} <span class="text-sm">${formatPct(m.copperPct)}</span></div></div>
+                    <div class="metric-card border-l-yellow-600"><div class="text-[10px] font-bold text-gray-500 uppercase">Altın (Ons)</div><div class="text-xl font-bold">$${m.gold || 0} <span class="text-sm">${formatPct(m.goldPct)}</span></div></div>
+                    <div class="metric-card border-l-gray-400"><div class="text-[10px] font-bold text-gray-500 uppercase">Gümüş (Ons)</div><div class="text-xl font-bold">$${m.silver || 0} <span class="text-sm">${formatPct(m.silverPct)}</span></div></div>
+                    <div class="metric-card border-l-blue-400"><div class="text-[10px] font-bold text-gray-500 uppercase">Lityum (Tekno)</div><div class="text-xl font-bold">$${m.lithium || 0} <span class="text-sm">${formatPct(m.lithiumPct)}</span></div></div>
                     
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Altın (Ons)</div><div class="text-xl font-bold">$${m.gold} <span class="text-sm">${formatPct(m.goldPct)}</span></div></div>
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">Uranyum Fonu</div><div class="text-xl font-bold">$${m.uranium} <span class="text-sm">${formatPct(m.uraniumPct)}</span></div></div>
-                    <div class="metric-card"><div class="text-[10px] font-bold text-gray-500 uppercase">VIX (Korku)</div><div class="text-xl font-bold">${m.vix} <span class="text-sm">${formatPct(m.vixPct)}</span></div></div>
+                    <div class="metric-card border-l-red-800"><div class="text-[10px] font-bold text-gray-500 uppercase">Bakır (Sanayi)</div><div class="text-xl font-bold">$${m.copper || 0} <span class="text-sm">${formatPct(m.copperPct)}</span></div></div>
+                    <div class="metric-card border-l-red-800"><div class="text-[10px] font-bold text-gray-500 uppercase">Demir Cevheri</div><div class="text-xl font-bold">$${m.iron || 0} <span class="text-sm">${formatPct(m.ironPct)}</span></div></div>
+                    <div class="metric-card border-l-blue-900"><div class="text-[10px] font-bold text-gray-500 uppercase">Navlun (BDRY)</div><div class="text-xl font-bold">$${m.shipping || 0} <span class="text-sm">${formatPct(m.shippingPct)}</span></div></div>
+
+                    <div class="metric-card border-l-green-600"><div class="text-[10px] font-bold text-gray-500 uppercase">Buğday</div><div class="text-xl font-bold">$${m.wheat || 0} <span class="text-sm">${formatPct(m.wheatPct)}</span></div></div>
+                    <div class="metric-card border-l-green-600"><div class="text-[10px] font-bold text-gray-500 uppercase">Mısır</div><div class="text-xl font-bold">$${m.corn || 0} <span class="text-sm">${formatPct(m.cornPct)}</span></div></div>
+                    
+                    <div class="metric-card border-l-purple-600"><div class="text-[10px] font-bold text-gray-500 uppercase">Uranyum Fonu</div><div class="text-xl font-bold">$${m.uranium || 0} <span class="text-sm">${formatPct(m.uraniumPct)}</span></div></div>
+                    <div class="metric-card border-l-black"><div class="text-[10px] font-bold text-gray-500 uppercase">VIX (Korku)</div><div class="text-xl font-bold">${m.vix || 0} <span class="text-sm">${formatPct(m.vixPct)}</span></div></div>
                 `;
 
                 manualList.forEach(item => {
