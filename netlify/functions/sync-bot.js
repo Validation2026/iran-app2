@@ -25,11 +25,22 @@ const tickers = {
 async function fetchSpotData() {
     try {
         const symbolsStr = Object.values(tickers).join(',');
-        const url = `https://financialmodelingprep.com/api/v3/quote/${symbolsStr}?apikey=${FMP_API_KEY}`;
         
-        const res = await fetch(url);
+        // DÜZELTME 1: URL sonuna "&t=ZAMAN" ekleyerek Netlify'ın aynı URL'i önbellekten çağırmasını engelliyoruz
+        const url = `https://financialmodelingprep.com/api/v3/quote/${symbolsStr}?apikey=${FMP_API_KEY}&t=${Date.now()}`;
+        
+        // DÜZELTME 2: Fetch ayarlarına "no-store" (asla kaydetme) emri veriyoruz
+        const res = await fetch(url, {
+            headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+            },
+            cache: 'no-store'
+        });
+        
         const data = await res.json();
-        
         const results = {};
         
         // FMP'den dönen veriyi bizim objeye eşle
@@ -118,6 +129,6 @@ exports.handler = async function(event) {
         currentData.lastUpdated = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
         await store.setJSON("state", currentData);
 
-        return { statusCode: 200, body: JSON.stringify({ success: true, method: "FMP Spot" }) };
+        return { statusCode: 200, body: JSON.stringify({ success: true, method: "FMP Spot with No-Cache" }) };
     } catch (error) { return { statusCode: 500, body: JSON.stringify({ error: error.message }) }; }
 };
