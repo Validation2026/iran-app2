@@ -66,6 +66,11 @@
         <div class="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
             <div class="px-5 py-3 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                 <h2 class="font-bold text-sm uppercase tracking-wider text-gray-800">🗺️ STRATEJİK ÇATIŞMA HARİTASI</h2>
+                <div class="flex gap-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#ff0000]"></div> İran</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#ff9900]"></div> İsrail</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#00ffff]"></div> ABD</span>
+                </div>
             </div>
             <div id="map" class="w-full h-[550px] z-10"></div>
         </div>
@@ -76,7 +81,7 @@
     </div>
 
     <script>
-        // --- GÜN HESAPLAYICI (28 Şubat 2026'dan beri) ---
+        // --- GÜN HESAPLAYICI ---
         const baslangicTarihi = new Date('2026-02-28T00:00:00');
         const bugun = new Date();
         const farkMilisaniye = Math.abs(bugun - baslangicTarihi);
@@ -93,31 +98,97 @@
                 L.geoJSON(data, { style: { fillColor: '#ef4444', color: '#ef4444', weight: 2, fillOpacity: 0.05, dashArray: '5, 5' } }).addTo(map);
             }).catch(e => console.log("Sınır verisi çekilemedi."));
 
+        // --- DEVESA ASKERİ ÜSLER LİSTESİ ---
         const askeri_usler = [
-            {"isim": "5. Filo (ABD - Bahreyn)", "lat": 26.20, "lon": 50.60}, {"isim": "Al Udeid Üssü (ABD - Katar)", "lat": 25.11, "lon": 51.31},
-            {"isim": "İncirlik Üssü (ABD/TR)", "lat": 37.00, "lon": 35.42}, {"isim": "Nevatim Üssü (İsrail)", "lat": 31.20, "lon": 35.01},
-            {"isim": "İsfahan 8. Taktik Üssü (İran)", "lat": 32.74, "lon": 51.86}
-        ];
-        const sabit_olaylar = [
-            {"isim": "Parchin Askeri Kompleksi", "lat": 35.53, "lon": 51.77, "actor": "il"},
-            {"isim": "Natanz Nükleer Tesisi", "lat": 33.97, "lon": 51.92, "actor": "il"},
-            {"isim": "Beyrut Dahiye Merkez", "lat": 33.85, "lon": 35.51, "actor": "il"},
-            {"isim": "Tel Aviv Banliyöleri", "lat": 32.11, "lon": 34.80, "actor": "ir"},
-            {"isim": "Erbil ABD Konsolosluğu", "lat": 36.23, "lon": 44.01, "actor": "ir"},
-            {"isim": "Sanaa Yeraltı Depoları", "lat": 15.36, "lon": 44.19, "actor": "us"}
+            {"isim": "5. Filo (ABD - Bahreyn)", "lat": 26.20, "lon": 50.60},
+            {"isim": "Al Udeid Üssü (ABD - Katar)", "lat": 25.11, "lon": 51.31},
+            {"isim": "Camp Arifjan (ABD - Kuveyt)", "lat": 28.87, "lon": 48.16},
+            {"isim": "İncirlik Üssü (ABD/TR)", "lat": 37.00, "lon": 35.42},
+            {"isim": "Prens Sultan Üssü (ABD - S.Arabistan)", "lat": 24.06, "lon": 47.56},
+            {"isim": "Muwaffaq Salti Üssü (ABD - Ürdün)", "lat": 31.83, "lon": 36.78},
+            {"isim": "Al Asad Üssü (ABD - Irak)", "lat": 33.79, "lon": 42.43},
+            {"isim": "Nevatim Üssü (İsrail)", "lat": 31.20, "lon": 35.01},
+            {"isim": "Hatzerim Üssü (İsrail)", "lat": 31.23, "lon": 34.66},
+            {"isim": "Ramon Üssü (İsrail)", "lat": 30.77, "lon": 34.67},
+            {"isim": "Tel Nof Üssü (İsrail)", "lat": 31.83, "lon": 34.82},
+            {"isim": "Hayfa Deniz Üssü (İsrail)", "lat": 32.82, "lon": 34.98},
+            {"isim": "İsfahan 8. Taktik Üssü (İran)", "lat": 32.74, "lon": 51.86},
+            {"isim": "Bender Abbas Deniz Üssü (İran)", "lat": 27.15, "lon": 56.19},
+            {"isim": "Hamedan Nojeh Üssü (İran)", "lat": 35.20, "lon": 48.65},
+            {"isim": "Çabahar Deniz Üssü (İran)", "lat": 25.28, "lon": 60.62}
         ];
 
+        // --- DEVASA GEÇMİŞ ÇATIŞMALAR LİSTESİ ---
+        const sabit_olaylar = [
+            {"isim": "Parchin Askeri Kompleksi", "lat": 35.53, "lon": 51.77, "actor": "il", "desc": "Tahran Yakını Füze Üretim Tesisi Vuruldu"},
+            {"isim": "İsfahan Radar Sistemi", "lat": 32.65, "lon": 51.66, "actor": "il", "desc": "S-300 Bataryaları İmha Edildi"},
+            {"isim": "Natanz Nükleer Tesisi", "lat": 33.97, "lon": 51.92, "actor": "il", "desc": "Hava Savunma Hatlarına Önleyici Vuruş"},
+            {"isim": "Tebriz Füze Siloları", "lat": 38.07, "lon": 46.29, "actor": "il", "desc": "Yeraltı Silolarına F-35 Operasyonu"},
+            {"isim": "Semnan Uzay ve Füze Merkezi", "lat": 35.58, "lon": 53.39, "actor": "il", "desc": "Balistik Füze Fırlatma Rampaları Vuruldu"},
+            {"isim": "Meşhed Hava Üssü Çevresi", "lat": 36.26, "lon": 59.61, "actor": "il", "desc": "Erken Uyarı Radarları Etkisiz Hale Getirildi"},
+            {"isim": "Ahvaz Petrol Altyapısı", "lat": 31.31, "lon": 48.67, "actor": "il", "desc": "Güneydeki Kritik Rafinerilerde Hasar Bildirildi"},
+            {"isim": "Harg Adası (Kharg)", "lat": 29.23, "lon": 50.32, "actor": "il", "desc": "İran'ın Ana Petrol İhraç Limanı Hedef Alındı"},
+            {"isim": "Fordow Nükleer Tesisi", "lat": 34.88, "lon": 50.99, "actor": "il", "desc": "Yeraltı Uranyum Zenginleştirme Tesisine Vuruş"},
+            {"isim": "Arak Ağır Su Reaktörü", "lat": 34.37, "lon": 49.24, "actor": "il", "desc": "Plütonyum Üretim Tesisi Çevresinde Patlamalar"},
+            {"isim": "Bandar-e Mahshahr", "lat": 30.55, "lon": 49.19, "actor": "il", "desc": "Petrokimya Tesislerinde Yangın"},
+            {"isim": "Zahedan Karargahı", "lat": 29.49, "lon": 60.86, "actor": "il", "desc": "Doğu Sınırındaki Lojistik Karargah Vuruldu"},
+            {"isim": "Keşm Adası (Qeshm)", "lat": 26.68, "lon": 55.82, "actor": "il", "desc": "Deniz Kuvvetleri İHA Üssü İmha Edildi"},
+            {"isim": "Beyrut Dahiye Merkez", "lat": 33.85, "lon": 35.51, "actor": "il", "desc": "Hizbullah Üst Düzey Komuta Merkezi Vuruldu"},
+            {"isim": "Şam İran Büyükelçiliği", "lat": 33.51, "lon": 36.27, "actor": "il", "desc": "Kudüs Gücü Komutanları Hedef Alındı"},
+            {"isim": "Halep Havalimanı", "lat": 36.18, "lon": 37.22, "actor": "il", "desc": "Silah Sevkiyatı Engellendi"},
+            {"isim": "Lazkiye Limanı", "lat": 35.52, "lon": 35.79, "actor": "il", "desc": "Konteyner Terminalinde Patlamalar"},
+            {"isim": "Humus T4 Hava Üssü", "lat": 34.52, "lon": 37.62, "actor": "il", "desc": "İran İHA Filosu Vuruldu"},
+            {"isim": "Bekaa Vadisi", "lat": 33.99, "lon": 36.14, "actor": "il", "desc": "Hizbullah Cephanelikleri İmha Edildi"},
+            {"isim": "Hudeyde Limanı", "lat": 14.79, "lon": 42.95, "actor": "il", "desc": "Husi Petrol Depoları İsrail F-15'lerince Vuruldu"},
+            {"isim": "Nevatim Hava Üssü", "lat": 31.20, "lon": 35.01, "actor": "ir", "desc": "Balistik Füze Yağmuru - Pistlerde Hasar"},
+            {"isim": "Meron Hava Kontrol", "lat": 32.99, "lon": 35.41, "actor": "ir", "desc": "Hizbullah Anti-Tank Füzeleriyle Radar Vurdu"},
+            {"isim": "Tel Aviv Banliyöleri", "lat": 32.11, "lon": 34.80, "actor": "ir", "desc": "Demir Kubbe'yi aşan füzeler sivil binalara isabet etti"},
+            {"isim": "Glilot Üssü", "lat": 32.14, "lon": 34.80, "actor": "ir", "desc": "İstihbarat Karargahına İHA Saldırısı"},
+            {"isim": "Aşkelon Enerji Tesisi", "lat": 31.63, "lon": 34.52, "actor": "ir", "desc": "Gazze'den ve Lübnan'dan Roket Atışları"},
+            {"isim": "Karish Doğal Gaz Sahası", "lat": 33.38, "lon": 34.03, "actor": "ir", "desc": "Açık Deniz Platformuna Hizbullah İHA'ları"},
+            {"isim": "Erbil Konsolosluğu", "lat": 36.23, "lon": 44.01, "actor": "ir", "desc": "Mossad Karargahı İddiasıyla Balistik Atış"},
+            {"isim": "Kızıldeniz Ticari Gemi", "lat": 13.33, "lon": 43.01, "actor": "ir", "desc": "Husiler Tarafından Kamikaze İHA Saldırısı"},
+            {"isim": "Bab'ül Mendep", "lat": 12.58, "lon": 43.33, "actor": "ir", "desc": "Tanker Geçişine Anti-Gemi Füzesi"},
+            {"isim": "Umman Körfezi", "lat": 25.00, "lon": 58.00, "actor": "ir", "desc": "Petrol Tankerine El Konulması / Sabotaj"},
+            {"isim": "Sanaa Yeraltı Depoları", "lat": 15.36, "lon": 44.19, "actor": "us", "desc": "B-2 Spirit Bombardıman Uçakları Vurdu"},
+            {"isim": "Saada (Yemen)", "lat": 16.94, "lon": 43.76, "actor": "us", "desc": "Husi Füze Fırlatma Rampaları İmha Edildi"},
+            {"isim": "Bağdat Yeşil Bölge", "lat": 33.31, "lon": 44.40, "actor": "us", "desc": "Milis Liderlerine Yönelik ABD SİHA Operasyonu"},
+            {"isim": "Jurf el-Sakhar", "lat": 32.88, "lon": 44.18, "actor": "us", "desc": "Ketaib Hizbullah Tesislerine Hava Harekatı"},
+            {"isim": "Deyrizor (Suriye)", "lat": 35.33, "lon": 40.14, "actor": "us", "desc": "İran Destekli Milis Kamplarına Misilleme"},
+            {"isim": "El-Meyadin (Suriye)", "lat": 35.01, "lon": 40.45, "actor": "us", "desc": "Sınır Ötesi Silah Depoları Vuruldu"},
+            {"isim": "Ebu Kemal (Suriye)", "lat": 34.45, "lon": 40.92, "actor": "us", "desc": "Lojistik Geçiş Noktasına ABD Saldırısı"}
+        ];
+
+        // Yıldız İkonu (Üsler için)
         const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#d1d5db" stroke="#4b5563" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
-        askeri_usler.forEach(us => { L.marker([us.lat, us.lon], {icon: L.divIcon({ html: starSvg, className: '', iconSize: [20,20] })}).addTo(map).bindPopup(`<b>🛡️ ${us.isim}</b>`); });
+        
+        askeri_usler.forEach(us => { 
+            L.marker([us.lat, us.lon], {icon: L.divIcon({ html: starSvg, className: '', iconSize: [20,20] })})
+             .addTo(map).bindPopup(`<b style='color:black; font-family:"Rajdhani", sans-serif;'>🛡️ ${us.isim}</b>`); 
+        });
 
         let dynamicMarkers = [];
+        
         function addStrikeMarker(olay, isDynamic = false) {
             const cls = olay.actor === "ir" ? "strike-ir" : olay.actor === "il" ? "strike-il" : "strike-us";
             const border = olay.actor === "ir" ? "#ff0000" : olay.actor === "il" ? "#ff9900" : "#00ffff";
-            const popupHtml = `<div style='color:white; background:#111; padding:12px; border-radius:6px; border:1px solid ${border};'><b style='color:${border};'>📍 ${olay.isim || olay.city}</b></div>`;
+            const title = olay.isim || olay.city || "SALDIRI";
+            const desc = olay.desc || olay.title || "";
+            const link = olay.link || "#";
+
+            const popupHtml = `
+                <div style='color:white; background:#111; padding:12px; border-radius:6px; border:1px solid ${border}; width:200px; font-family:"Rajdhani", sans-serif;'>
+                    <b style='color:${border}; font-size:14px; text-transform:uppercase;'>📍 ${title}</b><br>
+                    <hr style='margin:6px 0; border-color:#333;'>
+                    ${desc ? `<span style='font-size:12px; color:#ddd;'>${desc}</span><br>` : ""}
+                    ${link !== "#" ? `<a href='${link}' target='_blank' style='display:inline-block; margin-top:10px; color:#111; background-color:${border}; text-decoration:none; font-size:11px; padding:4px 8px; border-radius:4px; font-weight:bold;'>🔗 HABERE GİT</a>` : ""}
+                </div>
+            `;
             const marker = L.marker([olay.lat, olay.lon], {icon: L.divIcon({ html: `<div class="${cls}"></div>`, className: '' })}).addTo(map).bindPopup(popupHtml);
             if (isDynamic) dynamicMarkers.push(marker);
         }
+
+        // Sabit Olayları (Dev Liste) Haritaya Bas
         sabit_olaylar.forEach(olay => addStrikeMarker(olay, false));
 
         // --- VERİ ÇEKME VE EKRANI DOLDURMA ---
@@ -132,10 +203,8 @@
                 // Gauge Chart Animasyonu
                 const score = data.riskScore || 0;
                 document.getElementById('risk-score-text').innerText = score;
-                // 125.6 tam yarım dairedir. 100 puanda offset 0 olur.
                 const offset = 125.6 - (125.6 * score / 100); 
                 document.getElementById('gauge-fill').style.strokeDashoffset = offset;
-                // Skora göre renk değişimi
                 document.getElementById('gauge-fill').style.stroke = score > 75 ? "#dc2626" : score > 40 ? "#f59e0b" : "#10b981";
                 document.getElementById('risk-score-text').style.color = score > 75 ? "#dc2626" : score > 40 ? "#f59e0b" : "#10b981";
 
@@ -144,7 +213,7 @@
                 document.getElementById('hurmuz-text').innerText = hurmuzDurum;
                 hBox.style.backgroundColor = hurmuzDurum.includes("AÇIK") ? "#2563eb" : hurmuzDurum.includes("KAPALI") ? "#dc2626" : "#ea580c";
 
-                // Metrikleri Birleştirme (Otomatik + Dinamik Manuel)
+                // Metrikleri Birleştirme
                 const m = data.market || {};
                 const manualList = data.manualMetrics || [];
                 const formatPct = (val) => val > 0 ? `<span class="text-green-600">+${val}%</span>` : val < 0 ? `<span class="text-red-600">${val}%</span>` : `<span class="text-gray-400">0%</span>`;
@@ -168,6 +237,7 @@
                 });
                 document.getElementById('metrics-container').innerHTML = metricsHtml;
 
+                // Botun Yeni Bulduğu Haberleri Haritaya Ekle (Sabitler kalır, dinamikler güncellenir)
                 dynamicMarkers.forEach(m => map.removeLayer(m));
                 dynamicMarkers = [];
                 if(data.mapStrikes) data.mapStrikes.forEach(olay => addStrikeMarker(olay, true));
