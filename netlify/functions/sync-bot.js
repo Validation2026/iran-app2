@@ -2,63 +2,25 @@ const { getStore, connectLambda } = require('@netlify/blobs');
 const Parser = require('rss-parser');
 const parser = new Parser({ headers: { 'User-Agent': 'Mozilla/5.0' } });
 
-// FMP'den (Financial Modeling Prep) alınan ücretsiz API Anahtarını buraya gir
-const FMP_API_KEY = "ZTSiaEyg5UdJYdcVyddu2xfKTr4FRwqS";
+// Kendi sisteminde kurulu olan paketi çağırıyoruz (Bot korumalarını aşar)
+const yahooFinance = require('yahoo-finance2').default;
 
-// FMP Spot / CFD Sembolleri (Birebir TradingView karşılıkları)
+// En aktif ve gerçeğe en yakın spot/vadeli sembolleri
 const tickers = {
-    brent: 'BZUSD',      // Brent Petrol Spot
-    gold: 'XAUUSD',      // Altın Spot
-    silver: 'XAGUSD',    // Gümüş Spot
-    usGas: 'NGUSD',      // Doğal Gaz Spot
-    wheat: 'ZWUSD',      // Buğday
-    corn: 'ZCUSD',       // Mısır
-    copper: 'HGUSD',     // Bakır
+    brent: 'BZ=F',       // Brent Petrol (Aktif Sürekli Kontrat)
+    gold: 'XAU=X',       // Altın SPOT (Gerçek zamanlı döviz kuru)
+    silver: 'XAG=X',     // Gümüş SPOT (Gerçek zamanlı döviz kuru)
+    usGas: 'NG=F',       // ABD Doğal Gaz
+    wheat: 'ZW=F',       // Buğday
+    corn: 'ZC=F',        // Mısır
+    copper: 'HG=F',      // Bakır
     vix: '^VIX',         // Korku Endeksi
     uranium: 'URA',      // Uranyum Fonu
     lithium: 'LIT',      // Lityum Fonu
-    shipping: 'BDRY',    // Navlun
-    iron: 'TIOUSD'       // Demir
+    shipping: 'BDRY',    // Navlun Fonu
+    iron: 'TIO=F',       // Demir Cevheri
+    gas: 'TTF=F'         // Avrupa Doğal Gaz
 };
-
-// Yeni ve Kesin Veri Çekme Fonksiyonu
-async function fetchSpotData() {
-    try {
-        const symbolsStr = Object.values(tickers).join(',');
-        
-        // DÜZELTME 1: URL sonuna "&t=ZAMAN" ekleyerek Netlify'ın aynı URL'i önbellekten çağırmasını engelliyoruz
-        const url = `https://financialmodelingprep.com/api/v3/quote/${symbolsStr}?apikey=${FMP_API_KEY}&t=${Date.now()}`;
-        
-        // DÜZELTME 2: Fetch ayarlarına "no-store" (asla kaydetme) emri veriyoruz
-        const res = await fetch(url, {
-            headers: {
-                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-            },
-            cache: 'no-store'
-        });
-        
-        const data = await res.json();
-        const results = {};
-        
-        // FMP'den dönen veriyi bizim objeye eşle
-        for (const [key, symbol] of Object.entries(tickers)) {
-            const quote = data.find(q => q.symbol === symbol);
-            if (quote) {
-                results[key] = {
-                    price: parseFloat(quote.price).toFixed(2),
-                    pct: parseFloat(quote.changesPercentage).toFixed(2)
-                };
-            }
-        }
-        return results;
-    } catch (e) {
-        console.error("FMP API Hatası:", e);
-        return null;
-    }
-}
 
 exports.handler = async function(event) {
     connectLambda(event);
@@ -72,21 +34,30 @@ exports.handler = async function(event) {
         let currentData = await store.get("state", { type: "json" });
         if (!currentData) return { statusCode: 404, body: "State not found" };
 
-        // PİYASA VERİLERİNİ GÜNCELLE
-        const spotData = await fetchSpotData();
-        
-        if (spotData) {
-            if (!currentData.market) currentData.market = {};
-            for (const [key, data] of Object.entries(spotData)) {
-                // Eğer admin panelinden OTO modundaysa (manuel kilitlenmemişse) güncelle
-                if (!currentData.lockedMetrics || !currentData.lockedMetrics[key]) {
-                    currentData.market[key] = data.price;
-                    currentData.market[key + 'Pct'] = data.pct;
-                }
-            }
-        }
+        if (!currentData.market) currentData.market = {};
 
-        // HABER VE HARİTA VERİLERİ (Bozulmadan Bırakıldı)
+        // 1. PİYASA VERİLERİNİ YAHOO-FINANCE2 İLE ÇEK (Eşzamanlı ve Hızlı)
+        const fetchPromises = Object.entries(tickers).map(async ([key, symbol]) => {
+            // Admin panelinden "Manuel" olarak kilitlendiyse o veriyi atla
+            if (currentData.lockedMetrics && currentData.lockedMetrics[key]) return;
+
+            try {
+                // quote fonksiyonu borsa tahtasındaki son rakamı çeker
+                const quote = await yahooFinance.quote(symbol);
+                if (quote && quote.regularMarketPrice !== undefined) {
+                    currentData.market[key] = parseFloat(quote.regularMarketPrice).toFixed(2);
+                    currentData.market[key + 'Pct'] = parseFloat(quote.regularMarketChangePercent || 0).toFixed(2);
+                }
+            } catch (e) {
+                console.log(`[UYARI] ${key} (${symbol}) verisi geçici olarak alınamadı:`, e.message);
+                // Hata alsa bile eski veri ekranda kalır, sistem çökmez.
+            }
+        });
+
+        // Tüm piyasa isteklerinin bitmesini bekle
+        await Promise.all(fetchPromises);
+
+        // 2. HABER VE HARİTA VERİLERİ (Bozulmadan Bırakıldı)
         const news_keywords = {
             "tahran": [35.68, 51.38, "il"], "isfahan": [32.65, 51.66, "il"], "iran": [35.68, 51.38, "il"],
             "tel aviv": [32.08, 34.78, "ir"], "kudüs": [31.76, 35.21, "ir"], "israil": [31.76, 35.21, "ir"],
@@ -129,6 +100,6 @@ exports.handler = async function(event) {
         currentData.lastUpdated = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
         await store.setJSON("state", currentData);
 
-        return { statusCode: 200, body: JSON.stringify({ success: true, method: "FMP Spot with No-Cache" }) };
+        return { statusCode: 200, body: JSON.stringify({ success: true, method: "Yahoo-Finance2 Spot & Futures" }) };
     } catch (error) { return { statusCode: 500, body: JSON.stringify({ error: error.message }) }; }
 };
