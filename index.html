@@ -120,7 +120,7 @@
             L.marker([us.lat, us.lon], {icon: starIcon}).addTo(map).bindPopup(`<b style='color:black; font-family:"Rajdhani", sans-serif;'>🛡️ ${us.isim}</b>`);
         });
 
-        function addStrikeMarker(olay) {
+        function addStrikeMarker(olay, isDynamic = false) {
             const cls = olay.actor === "ir" ? "strike-ir" : olay.actor === "il" ? "strike-il" : "strike-us";
             const border = olay.actor === "ir" ? "#ff0000" : olay.actor === "il" ? "#ff9900" : "#00ffff";
             const title = olay.isim || olay.city || "SALDIRI";
@@ -137,7 +137,46 @@
             `;
             
             const icon = L.divIcon({ html: `<div class="${cls}"></div>`, className: '' });
-            L.marker([olay.lat, olay.lon], {icon: icon}).addTo(map).bindPopup(popupHtml);
+            const marker = L.marker([olay.lat, olay.lon], {icon: icon}).addTo(map).bindPopup(popupHtml);
+            
+            // Eğer bu canlı bir haberse, daha sonra silebilmek için listeye kaydet
+            if (isDynamic) {
+                dynamicMarkers.push(marker);
+            }
+        }
+
+        // 1. Sabit Olayları (Geçmiş Krizleri) Ekrana Bas (Bunlar hiç silinmeyecek)
+        sabit_olaylar.forEach(olay => addStrikeMarker(olay, false));
+        
+        let dynamicMarkers = [];
+
+        async function loadDashboard() {
+            try {
+                const res = await fetch('/api/state?t=' + Date.now());
+                const data = await res.json();
+                
+                // ... (Metriklerin ve diğer HTML doldurma işlemleri burada aynı kalacak) ...
+
+                // 2. Canlı Haber İşaretlerini Haritada Güncelle
+                // Önce eski haber noktalarını haritadan temizle (sabitler kalır)
+                dynamicMarkers.forEach(m => map.removeLayer(m));
+                dynamicMarkers = [];
+                
+                // Sonra botun yeni bulduğu haberleri haritaya ekle
+                if(data.mapStrikes && data.mapStrikes.length > 0) {
+                    data.mapStrikes.forEach(olay => addStrikeMarker(olay, true));
+                }
+
+                // Haber Akışını Menüye Bas
+                if(data.newsFeed) {
+                    document.getElementById('news-feed').innerHTML = data.newsFeed.map(n => `
+                        <div class="border-b border-gray-100 pb-3">
+                            <a href="${n.link}" target="_blank" class="text-sm font-semibold text-gray-800 hover:text-red-600 transition block leading-tight">${n.title}</a>
+                        </div>
+                    `).join('');
+                }
+
+            } catch (err) { console.error("API okunamadı:", err); }
         }
 
         // Sabit Olayları Ekrana Bas
