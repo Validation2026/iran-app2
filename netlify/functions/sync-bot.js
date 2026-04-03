@@ -2,25 +2,51 @@ const { getStore, connectLambda } = require('@netlify/blobs');
 const Parser = require('rss-parser');
 const parser = new Parser({ headers: { 'User-Agent': 'Mozilla/5.0' } });
 
-// 1. GÜNCELLEME: Chart API yerine doğrudan Spot Quote API'sine geçildi
-async function fetchYahooDirect(symbol) {
+// FMP'den (Financial Modeling Prep) alınan ücretsiz API Anahtarını buraya gir
+const FMP_API_KEY = "ZTSiaEyg5UdJYdcVyddu2xfKTr4FRwqS";
+
+// FMP Spot / CFD Sembolleri (Birebir TradingView karşılıkları)
+const tickers = {
+    brent: 'BZUSD',      // Brent Petrol Spot
+    gold: 'XAUUSD',      // Altın Spot
+    silver: 'XAGUSD',    // Gümüş Spot
+    usGas: 'NGUSD',      // Doğal Gaz Spot
+    wheat: 'ZWUSD',      // Buğday
+    corn: 'ZCUSD',       // Mısır
+    copper: 'HGUSD',     // Bakır
+    vix: '^VIX',         // Korku Endeksi
+    uranium: 'URA',      // Uranyum Fonu
+    lithium: 'LIT',      // Lityum Fonu
+    shipping: 'BDRY',    // Navlun
+    iron: 'TIOUSD'       // Demir
+};
+
+// Yeni ve Kesin Veri Çekme Fonksiyonu
+async function fetchSpotData() {
     try {
-        const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`;
-        const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }});
+        const symbolsStr = Object.values(tickers).join(',');
+        const url = `https://financialmodelingprep.com/api/v3/quote/${symbolsStr}?apikey=${FMP_API_KEY}`;
+        
+        const res = await fetch(url);
         const data = await res.json();
         
-        // Veri gelip gelmediğini kontrol et
-        if (!data.quoteResponse || !data.quoteResponse.result || data.quoteResponse.result.length === 0) return null;
+        const results = {};
         
-        const quote = data.quoteResponse.result[0];
-        const current = quote.regularMarketPrice;
-        const pct = quote.regularMarketChangePercent;
-        
-        // Bazen tahta kapalıyken undefined dönebilir, patlamaması için kontrol
-        if (current === undefined || pct === undefined) return null;
-
-        return { price: parseFloat(current).toFixed(2), pct: parseFloat(pct).toFixed(2) };
-    } catch (e) { return null; }
+        // FMP'den dönen veriyi bizim objeye eşle
+        for (const [key, symbol] of Object.entries(tickers)) {
+            const quote = data.find(q => q.symbol === symbol);
+            if (quote) {
+                results[key] = {
+                    price: parseFloat(quote.price).toFixed(2),
+                    pct: parseFloat(quote.changesPercentage).toFixed(2)
+                };
+            }
+        }
+        return results;
+    } catch (e) {
+        console.error("FMP API Hatası:", e);
+        return null;
+    }
 }
 
 exports.handler = async function(event) {
@@ -35,24 +61,21 @@ exports.handler = async function(event) {
         let currentData = await store.get("state", { type: "json" });
         if (!currentData) return { statusCode: 404, body: "State not found" };
 
-        // 2. GÜNCELLEME: Brent için CO=F yerine spot tahtaya daha yakın olan BZ=F kullanıldı
-        const tickers = {
-            brent: 'BZ=F', gold: 'GC=F', gas: 'TTF=F', vix: '^VIX', silver: 'SI=F',
-            uranium: 'URA', shipping: 'BDRY', wheat: 'ZW=F', corn: 'ZC=F',
-            copper: 'HG=F', lithium: 'LIT', iron: 'TIO=F', usGas: 'NG=F'
-        };
-
-        const results = await Promise.all(Object.entries(tickers).map(async ([key, sym]) => ({ key, data: await fetchYahooDirect(sym) })));
-
-        results.forEach(({ key, data }) => {
-            if (data && (!currentData.lockedMetrics || !currentData.lockedMetrics[key])) {
-                if (!currentData.market) currentData.market = {};
-                currentData.market[key] = data.price;
-                currentData.market[key + 'Pct'] = data.pct;
+        // PİYASA VERİLERİNİ GÜNCELLE
+        const spotData = await fetchSpotData();
+        
+        if (spotData) {
+            if (!currentData.market) currentData.market = {};
+            for (const [key, data] of Object.entries(spotData)) {
+                // Eğer admin panelinden OTO modundaysa (manuel kilitlenmemişse) güncelle
+                if (!currentData.lockedMetrics || !currentData.lockedMetrics[key]) {
+                    currentData.market[key] = data.price;
+                    currentData.market[key + 'Pct'] = data.pct;
+                }
             }
-        });
+        }
 
-        // AŞAĞIDAKİ HİÇBİR ŞEYE DOKUNULMADI
+        // HABER VE HARİTA VERİLERİ (Bozulmadan Bırakıldı)
         const news_keywords = {
             "tahran": [35.68, 51.38, "il"], "isfahan": [32.65, 51.66, "il"], "iran": [35.68, 51.38, "il"],
             "tel aviv": [32.08, 34.78, "ir"], "kudüs": [31.76, 35.21, "ir"], "israil": [31.76, 35.21, "ir"],
@@ -95,6 +118,6 @@ exports.handler = async function(event) {
         currentData.lastUpdated = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
         await store.setJSON("state", currentData);
 
-        return { statusCode: 200, body: JSON.stringify({ success: true }) };
+        return { statusCode: 200, body: JSON.stringify({ success: true, method: "FMP Spot" }) };
     } catch (error) { return { statusCode: 500, body: JSON.stringify({ error: error.message }) }; }
 };
