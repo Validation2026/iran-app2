@@ -1,25 +1,22 @@
 const { getStore, connectLambda } = require('@netlify/blobs');
 const Parser = require('rss-parser');
 const parser = new Parser({ headers: { 'User-Agent': 'Mozilla/5.0' } });
-
-// Kendi sisteminde kurulu olan paketi çağırıyoruz (Bot korumalarını aşar)
 const yahooFinance = require('yahoo-finance2').default;
 
-// En aktif ve gerçeğe en yakın spot/vadeli sembolleri
 const tickers = {
-    brent: 'BZ=F',       // Brent Petrol (Aktif Sürekli Kontrat)
-    gold: 'XAU=X',       // Altın SPOT (Gerçek zamanlı döviz kuru)
-    silver: 'XAG=X',     // Gümüş SPOT (Gerçek zamanlı döviz kuru)
-    usGas: 'NG=F',       // ABD Doğal Gaz
-    wheat: 'ZW=F',       // Buğday
-    corn: 'ZC=F',        // Mısır
-    copper: 'HG=F',      // Bakır
-    vix: '^VIX',         // Korku Endeksi
-    uranium: 'URA',      // Uranyum Fonu
-    lithium: 'LIT',      // Lityum Fonu
-    shipping: 'BDRY',    // Navlun Fonu
-    iron: 'TIO=F',       // Demir Cevheri
-    gas: 'TTF=F'         // Avrupa Doğal Gaz
+    brent: 'BZ=F',       
+    gold: 'XAU=X',       
+    silver: 'XAG=X',     
+    usGas: 'NG=F',       
+    wheat: 'ZW=F',       
+    corn: 'ZC=F',        
+    copper: 'HG=F',      
+    vix: '^VIX',         
+    uranium: 'URA',      
+    lithium: 'LIT',      
+    shipping: 'BDRY',    
+    iron: 'TIO=F',       
+    gas: 'TTF=F'         
 };
 
 exports.handler = async function(event) {
@@ -33,31 +30,40 @@ exports.handler = async function(event) {
         const store = getStore("iran-risk");
         let currentData = await store.get("state", { type: "json" });
         if (!currentData) return { statusCode: 404, body: "State not found" };
-
         if (!currentData.market) currentData.market = {};
 
-        // 1. PİYASA VERİLERİNİ YAHOO-FINANCE2 İLE ÇEK (Eşzamanlı ve Hızlı)
-        const fetchPromises = Object.entries(tickers).map(async ([key, symbol]) => {
-            // Admin panelinden "Manuel" olarak kilitlendiyse o veriyi atla
-            if (currentData.lockedMetrics && currentData.lockedMetrics[key]) return;
+        // 1. ZAMAN AŞIMINI ENGELLEMEK İÇİN TOPLU İSTEK HAZIRLIĞI
+        const symbolsToFetch = [];
+        const symbolToKey = {}; // Hangi Yahoo sembolünün senin sistemindeki hangi kelimeye (örn: brent, gold) denk geldiğini tutar
 
+        for (const [key, symbol] of Object.entries(tickers)) {
+            // Admin panelinden kilitli (manuel) DEĞİLSE listeye ekle
+            if (!currentData.lockedMetrics || !currentData.lockedMetrics[key]) {
+                symbolsToFetch.push(symbol);
+                symbolToKey[symbol] = key; 
+            }
+        }
+
+        // 2. TÜM PİYASAYI TEK SEFERDE ÇEK (Yarım saniye sürer, Netlify'ı çökertmez)
+        if (symbolsToFetch.length > 0) {
             try {
-                // quote fonksiyonu borsa tahtasındaki son rakamı çeker
-                const quote = await yahooFinance.quote(symbol);
-                if (quote && quote.regularMarketPrice !== undefined) {
-                    currentData.market[key] = parseFloat(quote.regularMarketPrice).toFixed(2);
-                    currentData.market[key + 'Pct'] = parseFloat(quote.regularMarketChangePercent || 0).toFixed(2);
+                const quotes = await yahooFinance.quote(symbolsToFetch);
+                // Gelen veriyi dizi formuna çevir
+                const quoteArray = Array.isArray(quotes) ? quotes : [quotes];
+                
+                for (const q of quoteArray) {
+                    const key = symbolToKey[q.symbol];
+                    if (key && q.regularMarketPrice !== undefined) {
+                        currentData.market[key] = parseFloat(q.regularMarketPrice).toFixed(2);
+                        currentData.market[key + 'Pct'] = parseFloat(q.regularMarketChangePercent || 0).toFixed(2);
+                    }
                 }
             } catch (e) {
-                console.log(`[UYARI] ${key} (${symbol}) verisi geçici olarak alınamadı:`, e.message);
-                // Hata alsa bile eski veri ekranda kalır, sistem çökmez.
+                console.log("[UYARI] Toplu veri çekimi hatası:", e.message);
             }
-        });
+        }
 
-        // Tüm piyasa isteklerinin bitmesini bekle
-        await Promise.all(fetchPromises);
-
-        // 2. HABER VE HARİTA VERİLERİ (Bozulmadan Bırakıldı)
+        // 3. HABER VE HARİTA BÖLÜMÜ (Aynı kaldı)
         const news_keywords = {
             "tahran": [35.68, 51.38, "il"], "isfahan": [32.65, 51.66, "il"], "iran": [35.68, 51.38, "il"],
             "tel aviv": [32.08, 34.78, "ir"], "kudüs": [31.76, 35.21, "ir"], "israil": [31.76, 35.21, "ir"],
@@ -98,8 +104,12 @@ exports.handler = async function(event) {
         else currentData.aiAnalysis = `ℹ️ İZLEME MODU: Hürmüz trafiği stabil. Piyasalar sahadaki askeri ve diplomatik gelişmeleri temkinli bir şekilde izliyor.`;
 
         currentData.lastUpdated = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
+        
+        // 4. Veritabanını Güncelle
         await store.setJSON("state", currentData);
 
-        return { statusCode: 200, body: JSON.stringify({ success: true, method: "Yahoo-Finance2 Spot & Futures" }) };
-    } catch (error) { return { statusCode: 500, body: JSON.stringify({ error: error.message }) }; }
+        return { statusCode: 200, body: JSON.stringify({ success: true, message: "Piyasa saniyesinde toplu çekildi." }) };
+    } catch (error) { 
+        return { statusCode: 500, body: JSON.stringify({ error: error.message }) }; 
+    }
 };
